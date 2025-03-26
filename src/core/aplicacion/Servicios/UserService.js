@@ -51,8 +51,12 @@ class UserService {
       }
   
       const updatedUser = {
-        ...user,
-        ...userData
+        id: user.id,
+        name: userData.name || user.name,
+        email: userData.email || user.email,
+        password: userData.password || user.password,
+        role: userData.role || user.role,
+        department: userData.department || user.department
       };
   
       return await this.userRepository.update(updatedUser);

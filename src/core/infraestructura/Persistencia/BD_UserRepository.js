@@ -12,8 +12,7 @@ class PostgresUserRepository extends UserRepository {
     }
     
     async findById(id) {
-        const userId = Number(id); 
-        return this.users.get(userId) || null;
+        return this.users.get(Number(id)) || null;
     }
       
     
@@ -22,23 +21,42 @@ class PostgresUserRepository extends UserRepository {
     }
     
     async save(user) {
-        const id = this.nextId++;
-        const newUser = new User(id, user.name, user.email, user.password, user.role, user.department);
+        const id = this.nextId;
+        const newUser = new User(
+            id,
+            user.name,
+            user.email,
+            user.password,
+            user.role,
+            user.department
+        );
+        
         this.users.set(id, newUser);
+        this.nextId++; 
+
         return newUser;
     }
     
     async update(user) {
         if (!this.users.has(user.id)) {
-          throw new Error('User not found');
+          throw new Error('Usuario no encontrado');
         }
-        this.users.set(user.id, user);
+
+        const updatedUser  = new User(
+            user.id,
+            user.name,
+            user.email,
+            user.password,
+            user.role,
+            user.department
+        );
+
+        this.users.set(updatedUser.id, updatedUser);
         return user;
     }
     
     async delete(id) {
-        const userId = Number(id); 
-        this.users.delete(userId);
+        this.users.delete(Number(id));
     }
     
     async findAll() {
