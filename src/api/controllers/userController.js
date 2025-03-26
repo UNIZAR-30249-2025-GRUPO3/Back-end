@@ -1,72 +1,76 @@
+const messageBroker = require('../../core/infraestructura/messageBroker');
+
 class UserController {
-  constructor(userService) {
-    this.userService = userService;
+  constructor() {
+    messageBroker.connect().catch(console.error);
   }
 
   async createUser(req, res) {
     try {
-
-      const user = await this.userService.createUser(req.body);
-      res.status(201).json(user);
-
+      await messageBroker.publish({
+        operation: 'createUser',
+        data: req.body
+      });
+      res.status(202).json({ message: 'Solicitud recibida crear usuario, procesando...' });
     } catch (error) {
-
-      res.status(400).json({ error: error.message });
-
+      res.status(500).json({ error: error.message });
     }
   }
+
 
   async getUserById(req, res) {
     try {
-
-      const user = await this.userService.getUserById(req.params.id);
-      res.json(user);
-
+      await messageBroker.publish({
+        operation: 'getUserById',
+        data: { id: req.params.id,
+                email: req.params.email
+              }
+      });
+      res.status(202).json({ message: 'Solicitud recibida obtener usuario por id, procesando...' });
     } catch (error) {
-
-      res.status(404).json({ error: error.message });
-
+      res.status(500).json({ error: error.message });
     }
   }
+
 
   async updateUser(req, res) {
-    try {
-
-      const user = await this.userService.updateUser(req.params.id, req.body);
-      res.json(user);
-
-    } catch (error) {
-
-      res.status(400).json({ error: error.message });
-
+      try {
+        await messageBroker.publish({
+          operation: 'updateUser',
+          data: { id: req.params.id }
+        });
+        res.status(202).json({ message: 'Solicitud recibida, procesando...' });
+      } catch (error) {
+        res.status(500).json({ error: error.message });
+      }
     }
-  }
+
 
   async deleteUser(req, res) {
-    try {
-
-      await this.userService.deleteUser(req.params.id);
-      res.status(204).send();
-
-    } catch (error) {
-
-      res.status(400).json({ error: error.message });
-
+      try {
+        await messageBroker.publish({
+          operation: 'deleteUser',
+          data: { id: req.params.id }
+        });
+        res.status(202).json({ message: 'Solicitud recibida, procesando...' });
+      } catch (error) {
+        res.status(500).json({ error: error.message });
+      }
     }
-  }
+
 
   async getAllUsers(req, res) {
     try {
-
-      const users = await this.userService.getAllUsers();
-      res.json(users);
-
+      await messageBroker.publish({
+        operation: 'getAllUsers',
+        data: req.body
+      });
+      res.status(202).json({ message: 'Solicitud recibida, procesando...' });
     } catch (error) {
-
-      res.status(400).json({ error: error.message });
-      
+      res.status(500).json({ error: error.message });
     }
   }
+
 }
 
 module.exports = UserController;

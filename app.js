@@ -10,9 +10,9 @@ const setupUserRoutes = require('./src/api/routes/userRoutes');
 
 
 // Inicializar dependencias
-const userRepository = new BD_UserRepository();
-const userService = new UserService(userRepository);
-const userController = new UserController(userService);
+//const userRepository = new BD_UserRepository();
+const userService = new UserService();
+const userController = new UserController();
 
 var app = express();
 
@@ -35,13 +35,26 @@ app.use((req, res, next) => {
 
 // error handler
 app.use(function(err, req, res, next) {
-  // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
-
-  // render the error page
   res.status(err.status || 500);
-  res.render('error');
+  res.json({ // ← Cambia esto
+    error: err.message || 'Internal Server Error',
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+  });
+});
+
+const PORT = process.env.PORT || 3000;
+
+const server = app.listen(PORT, () => {
+  console.log(`Servidor escuchando en http://localhost:${PORT}`);
+});
+
+// Manejo de errores del servidor
+server.on('error', error => {
+  if (error.code === 'EADDRINUSE') {
+    console.error(`El puerto ${PORT} está en uso. Prueba con otro puerto.`);
+  } else {
+    console.error('Error al iniciar el servidor:', error);
+  }
 });
 
 module.exports = app;
