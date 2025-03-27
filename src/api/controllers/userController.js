@@ -64,8 +64,46 @@ class UserController {
     } catch (error) {
 
       res.status(400).json({ error: error.message });
-      
+
     }
+  }
+
+  async login(req, res) {
+    const { email, password } = req.body;
+
+    try {
+      const user = await this.userService.getUserByEmail(email);
+      if (!user) {
+        return res.status(404).json({
+          error: "Usuario no encontrado"
+        });
+      }
+
+      //const passwordMatch = await bcrypt.compare(password, user.password); // Por si encriptamos las contraseñas mas adelante
+      if (user.password !== password) {
+        return res.status(401).json({
+          error: "Contraseña incorrecta"
+        });
+      } else {
+        req.session.user = { user_id: user.id, role: user.role };
+      }
+
+      res.status(200).json({
+        message: "OK", user: { user_id: req.session.user.user_id, role: req.session.user.role }
+      });
+
+    } catch (err) {
+      console.error(err.message);
+      res.status(500).send("Server Error");
+    }
+  }
+
+  async logout(req, res) {
+    req.session.reset();
+    return res.json({
+      message: 'Closed session'
+    });
+
   }
 }
 
