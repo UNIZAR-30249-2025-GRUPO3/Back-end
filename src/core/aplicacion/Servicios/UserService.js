@@ -16,7 +16,7 @@ async setupConsumers() {
       await this.messageBroker.connect();
       console.log('[RabbitMQ] Consumidor conectado'); // Debug
 
-      this.messageBroker.consume(async (message) => {
+      this.messageBroker.consume('user_operations',async (message) => {
         if (!message || !message.operation) { // ← Validación clave
           console.error('[UserService] Mensaje malformado:', message);
           return;
@@ -24,27 +24,28 @@ async setupConsumers() {
 
           try {
               console.log('[DEBUG] Mensaje recibido:', message); // Debug
-
+              let user;
               switch (message.operation) {
                   case 'createUser':
-                      await this.handleCreateUser(message.data);
+                      user = await this.handleCreateUser(message.data);
                       break;
                   case 'getUserById':
-                      await this.handleGetUserById(message.data);
+                      user = await this.handleGetUserById(message.data);
                       break;
                   case 'updateUser':
-                      await this.handleUpdateUser(message.data);
+                      user = await this.handleUpdateUser(message.data);
                       break;
                   case 'deleteUser':
-                      await this.handleDeleteUser(message.data);
+                      user = await this.handleDeleteUser(message.data);
                       break;
                   case 'getAllUsers':
-                      await this.handleGetAllUsers(message.data);
+                      user = await this.handleGetAllUsers(message.data);
                       break;
                   default:
                       break;
               }
               
+            await messageBroker.sendResponse(user, 'abcd', message.replyTo);
           } catch (error) {
               console.error('Error procesando mensaje:', error);
           }
@@ -67,10 +68,8 @@ async setupConsumers() {
           role: userData.role,
           department: userData.department
       };
-      
       const savedUser = await this.userRepository.save(user);
-      
-      console.log('[DEBUG] Usuario guardado:', savedUser); // Debug
+      console.log('[DEBUG] Usuario guardado:', savedUser);
       return savedUser;
     }
 
@@ -137,9 +136,10 @@ async setupConsumers() {
 
     try {
       const user = await this.userRepository.findById(userData.id);
+          
       if (!user) {
-        console.warn(`[UserService] Usuario no encontrado (ID: ${userData.id})`);
-        throw new Error('Usuario no encontrado');
+          console.warn(`[UserService] Usuario no encontrado (ID: ${userData.id})`);
+          throw new Error('Usuario no encontrado');
       }
 
       if (userData.updateFields.email && userData.updateFields.email !== user.email) {
@@ -155,7 +155,7 @@ async setupConsumers() {
         updatedAt: new Date() 
       };
 
-      const updatedUser = await this.userRepository.update(userData.id, updatedData);
+      const updatedUser = await this.userRepository.update(updatedData);
 
       console.log(`[UserService] Usuario actualizado: ${updatedUser.email}`);
       console.log('[DEBUG] Datos finales:', {

@@ -7,26 +7,52 @@ class UserController {
 
   async createUser(req, res) {
     try {
+      const correlationId = 'abcd'; 
+      const replyToQueue = 'user_responses';
+  
       await messageBroker.publish({
         operation: 'createUser',
         data: req.body
-      });
-      res.status(202).json({ message: 'Solicitud recibida crear usuario, procesando...' });
+      }, correlationId, replyToQueue);
+      
+      const consumer = async (response, respCorrelationId) => {
+        if (respCorrelationId === correlationId) { 
+          console.log('[Cliente] Respuesta recibida:', response);
+          res.status(201).json(response); 
+          await messageBroker.removeConsumer(replyToQueue); 
+
+        }
+      };
+  
+      messageBroker.consume('user_responses', consumer);
+
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
   }
-
-
+  
   async getUserById(req, res) {
     try {
+      const correlationId = 'abcd'; 
+      const replyToQueue = 'user_responses'; 
+  
       await messageBroker.publish({
         operation: 'getUserById',
         data: { id: req.params.id,
-                email: req.params.email
-              }
-      });
-      res.status(202).json({ message: 'Solicitud recibida obtener usuario por id, procesando...' });
+          email: req.params.email
+        }
+      }, correlationId, replyToQueue);
+   
+      const consumer = async (response, respCorrelationId) => {
+        if (respCorrelationId === correlationId) { 
+          console.log('[Cliente] Respuesta recibida:', response);
+          res.status(201).json(response); 
+          await messageBroker.removeConsumer('user_responses');
+        }
+      };
+  
+      messageBroker.consume('user_responses', consumer);
+
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
@@ -34,12 +60,38 @@ class UserController {
 
 
   async updateUser(req, res) {
-      try {
+      /*try {
         await messageBroker.publish({
           operation: 'updateUser',
           data: { id: req.params.id }
         });
         res.status(202).json({ message: 'Solicitud recibida, procesando...' });
+      } catch (error) {
+        res.status(500).json({ error: error.message });
+      }*/
+
+      try {
+        const correlationId = 'abcd'; 
+        const replyToQueue = 'user_responses'; 
+        const updateFields = req.body;
+
+        await messageBroker.publish({
+          operation: 'updateUser',
+          data: { id: req.params.id,
+            updateFields
+          }
+        }, correlationId, replyToQueue);
+     
+        const consumer = async (response, respCorrelationId) => {
+          if (respCorrelationId === correlationId) { 
+            console.log('[Cliente] Respuesta recibida:', response);
+            res.status(201).json(response); 
+            await messageBroker.removeConsumer('user_responses');
+          }
+        };
+    
+        messageBroker.consume('user_responses', consumer);
+  
       } catch (error) {
         res.status(500).json({ error: error.message });
       }
@@ -48,11 +100,24 @@ class UserController {
 
   async deleteUser(req, res) {
       try {
+        const correlationId = 'abcd'; 
+        const replyToQueue = 'user_responses'; 
+    
         await messageBroker.publish({
           operation: 'deleteUser',
           data: { id: req.params.id }
-        });
-        res.status(202).json({ message: 'Solicitud recibida, procesando...' });
+        }, correlationId, replyToQueue);
+     
+        const consumer = async (response, respCorrelationId) => {
+          if (respCorrelationId === correlationId) { 
+            console.log('[Cliente] Respuesta recibida:', response);
+            res.status(201).json(response); 
+            await messageBroker.removeConsumer('user_responses');
+          }
+        };
+    
+        messageBroker.consume('user_responses', consumer);
+  
       } catch (error) {
         res.status(500).json({ error: error.message });
       }
@@ -61,11 +126,24 @@ class UserController {
 
   async getAllUsers(req, res) {
     try {
+      const correlationId = 'abcd'; 
+      const replyToQueue = 'user_responses'; 
+  
       await messageBroker.publish({
         operation: 'getAllUsers',
         data: req.body
-      });
-      res.status(202).json({ message: 'Solicitud recibida, procesando...' });
+      }, correlationId, replyToQueue);
+   
+      const consumer = async (response, respCorrelationId) => {
+        if (respCorrelationId === correlationId) { 
+          console.log('[Cliente] Respuesta recibida:', response);
+          res.status(201).json(response); 
+          await messageBroker.removeConsumer('user_responses');
+        }
+      };
+  
+      messageBroker.consume('user_responses', consumer);
+
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
