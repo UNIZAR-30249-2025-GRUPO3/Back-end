@@ -47,6 +47,8 @@ class UserService {
               await messageBroker.sendResponse(user, correlationId, message.replyTo);
             } catch (error) {
                 console.error('Error procesando mensaje:', error);
+                const errorResponse = { success: false, error: error.message };
+                await messageBroker.sendResponse(errorResponse, correlationId, message.replyTo);
             }
         });
       } catch (error) {
@@ -84,7 +86,7 @@ class UserService {
           
       if (!user) {
           console.warn(`[UserService] Usuario no encontrado (ID: ${userData.id})`);
-          return { error: 'Usuario no encontrado' };
+          throw new Error('Usuario no encontrado');
       }
   
       console.log(`[UserService] Usuario encontrado: ${user.email}`);
@@ -123,13 +125,13 @@ class UserService {
             
       if (!user) {
           console.warn(`[UserService] Usuario no encontrado (ID: ${userData.id})`);
-          return { error: 'Usuario no encontrado' };
+          throw new Error('Usuario no encontrado');
       }
 
       if (userData.updateFields.email && userData.updateFields.email !== user.email) {
         const emailExists = await this.userRepository.findByEmail(userData.updateFields.email);
         if (emailExists) {
-          return { error: 'El email ya está en uso' };
+          throw new Error('El email ya está en uso');
         }
       }
 
@@ -162,7 +164,7 @@ class UserService {
     const user = await this.userRepository.findById(userData.id);
       if (!user) {
         console.warn(`[UserService] Usuario no encontrado (ID: ${userData.id})`);
-        return { error: 'Usuario no encontrado' };
+        throw new Error('Usuario no encontrado');
       }
 
     const deletionResult = await this.userRepository.delete(userData.id);
