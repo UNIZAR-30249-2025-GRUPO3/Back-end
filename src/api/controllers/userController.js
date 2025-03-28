@@ -1,4 +1,5 @@
 const messageBroker = require('../../core/infraestructura/messageBroker');
+const { v4: uuidv4 } = require('uuid');
 
 class UserController {
   constructor() {
@@ -7,7 +8,7 @@ class UserController {
 
   async createUser(req, res) {
     try {
-      const correlationId = 'abcd'; 
+      const correlationId = uuidv4(); 
       const replyToQueue = 'user_responses';
   
       await messageBroker.publish({
@@ -18,12 +19,14 @@ class UserController {
       const consumer = async (response, respCorrelationId) => {
         if (respCorrelationId === correlationId) { 
           console.log('[Cliente] Respuesta recibida:', response);
-          res.status(201).json(response); 
+          if (response.error) {
+            res.status(400).json({ error: response.error });
+          } else {
+            res.status(201).json(response);
+          }
           await messageBroker.removeConsumer(replyToQueue); 
-
         }
       };
-  
       messageBroker.consume('user_responses', consumer);
 
     } catch (error) {
@@ -33,7 +36,7 @@ class UserController {
   
   async getUserById(req, res) {
     try {
-      const correlationId = 'abcd'; 
+      const correlationId = uuidv4(); 
       const replyToQueue = 'user_responses'; 
   
       await messageBroker.publish({
@@ -46,11 +49,14 @@ class UserController {
       const consumer = async (response, respCorrelationId) => {
         if (respCorrelationId === correlationId) { 
           console.log('[Cliente] Respuesta recibida:', response);
-          res.status(201).json(response); 
+          if (response.error) {
+            res.status(400).json({ error: response.error });
+          } else {
+            res.status(201).json(response);
+          }
           await messageBroker.removeConsumer('user_responses');
         }
       };
-  
       messageBroker.consume('user_responses', consumer);
 
     } catch (error) {
@@ -60,18 +66,8 @@ class UserController {
 
 
   async updateUser(req, res) {
-      /*try {
-        await messageBroker.publish({
-          operation: 'updateUser',
-          data: { id: req.params.id }
-        });
-        res.status(202).json({ message: 'Solicitud recibida, procesando...' });
-      } catch (error) {
-        res.status(500).json({ error: error.message });
-      }*/
-
       try {
-        const correlationId = 'abcd'; 
+        const correlationId = uuidv4(); 
         const replyToQueue = 'user_responses'; 
         const updateFields = req.body;
 
@@ -85,7 +81,11 @@ class UserController {
         const consumer = async (response, respCorrelationId) => {
           if (respCorrelationId === correlationId) { 
             console.log('[Cliente] Respuesta recibida:', response);
-            res.status(201).json(response); 
+            if (response.error) {
+              res.status(400).json({ error: response.error });
+            } else {
+              res.status(201).json(response);
+            }
             await messageBroker.removeConsumer('user_responses');
           }
         };
@@ -100,7 +100,7 @@ class UserController {
 
   async deleteUser(req, res) {
       try {
-        const correlationId = 'abcd'; 
+        const correlationId = uuidv4(); 
         const replyToQueue = 'user_responses'; 
     
         await messageBroker.publish({
@@ -111,11 +111,14 @@ class UserController {
         const consumer = async (response, respCorrelationId) => {
           if (respCorrelationId === correlationId) { 
             console.log('[Cliente] Respuesta recibida:', response);
-            res.status(201).json(response); 
+            if (response.error) {
+              res.status(400).json({ error: response.error });
+            } else {
+              res.status(201).json(response);
+            }
             await messageBroker.removeConsumer('user_responses');
           }
         };
-    
         messageBroker.consume('user_responses', consumer);
   
       } catch (error) {
@@ -126,7 +129,7 @@ class UserController {
 
   async getAllUsers(req, res) {
     try {
-      const correlationId = 'abcd'; 
+      const correlationId = uuidv4(); 
       const replyToQueue = 'user_responses'; 
   
       await messageBroker.publish({
@@ -137,11 +140,14 @@ class UserController {
       const consumer = async (response, respCorrelationId) => {
         if (respCorrelationId === correlationId) { 
           console.log('[Cliente] Respuesta recibida:', response);
-          res.status(201).json(response); 
+          if (response.error) {
+            res.status(400).json({ error: response.error });
+          } else {
+            res.status(201).json(response);
+          }
           await messageBroker.removeConsumer('user_responses');
         }
       };
-  
       messageBroker.consume('user_responses', consumer);
 
     } catch (error) {

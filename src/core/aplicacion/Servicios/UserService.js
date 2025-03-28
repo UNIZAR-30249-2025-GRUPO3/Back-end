@@ -9,58 +9,58 @@ class UserService {
     this.setupConsumers().catch(err => {
         console.error('Error al iniciar consumidor:', err);
     });
-}
-  
-async setupConsumers() {
-  try {
-      await this.messageBroker.connect();
-      console.log('[RabbitMQ] Consumidor conectado'); // Debug
-
-      this.messageBroker.consume('user_operations',async (message) => {
-        if (!message || !message.operation) { // ← Validación clave
-          console.error('[UserService] Mensaje malformado:', message);
-          return;
-        }
-
-          try {
-              console.log('[DEBUG] Mensaje recibido:', message); // Debug
-              let user;
-              switch (message.operation) {
-                  case 'createUser':
-                      user = await this.handleCreateUser(message.data);
-                      break;
-                  case 'getUserById':
-                      user = await this.handleGetUserById(message.data);
-                      break;
-                  case 'updateUser':
-                      user = await this.handleUpdateUser(message.data);
-                      break;
-                  case 'deleteUser':
-                      user = await this.handleDeleteUser(message.data);
-                      break;
-                  case 'getAllUsers':
-                      user = await this.handleGetAllUsers(message.data);
-                      break;
-                  default:
-                      break;
-              }
-              
-            await messageBroker.sendResponse(user, 'abcd', message.replyTo);
-          } catch (error) {
-              console.error('Error procesando mensaje:', error);
-          }
-      });
-    } catch (error) {
-      console.error('Error en setupConsumers:', error);
-    }
   }
+  
+  async setupConsumers() {
+    try {
+        await this.messageBroker.connect();
+        console.log('[RabbitMQ] Consumidor conectado'); 
+
+        this.messageBroker.consume('user_operations',async (message, correlationId) => {
+          if (!message || !message.operation) { 
+            console.error('[UserService] Mensaje malformado:', message);
+            return;
+          }
+            try {
+                console.log('[DEBUG] Mensaje recibido:', message); 
+                let user;
+                switch (message.operation) {
+                    case 'createUser':
+                        user = await this.handleCreateUser(message.data);
+                        break;
+                    case 'getUserById':
+                        user = await this.handleGetUserById(message.data);
+                        break;
+                    case 'updateUser':
+                        user = await this.handleUpdateUser(message.data);
+                        break;
+                    case 'deleteUser':
+                        user = await this.handleDeleteUser(message.data);
+                        break;
+                    case 'getAllUsers':
+                        user = await this.handleGetAllUsers(message.data);
+                        break;
+                    default:
+                        break;
+                }
+                
+              await messageBroker.sendResponse(user, correlationId, message.replyTo);
+            } catch (error) {
+                console.error('Error procesando mensaje:', error);
+            }
+        });
+      } catch (error) {
+        console.error('Error en setupConsumers:', error);
+      }
+    }
 
 
     async handleCreateUser(userData) {
       console.log('[DEBUG] Procesando creación de usuario:', userData.email);
       const existingUser = await this.userRepository.findByEmail(userData.email);
-      if (existingUser) throw new Error('El email ya está en uso');
-      
+      if (existingUser) {
+        return { error: 'El email ya está en uso' };
+      }
       const user = {
           name: userData.name,
           email: userData.email,
@@ -80,29 +80,20 @@ async setupConsumers() {
   
       console.log(`[UserService] Buscando usuario con ID: ${userData.id}`);
   
-      try {
-          const user = await this.userRepository.findById(userData.id);
+      const user = await this.userRepository.findById(userData.id);
           
-          if (!user) {
-              console.warn(`[UserService] Usuario no encontrado (ID: ${userData.id})`);
-              throw new Error('Usuario no encontrado');
-          }
-  
-          console.log(`[UserService] Usuario encontrado: ${user.email}`);
-          return user;
-  
-      } catch (error) {
-          console.error(`[UserService] Error al buscar usuario (ID: ${userData.id}):`, error);
-          throw error;
+      if (!user) {
+          console.warn(`[UserService] Usuario no encontrado (ID: ${userData.id})`);
+          return { error: 'Usuario no encontrado' };
       }
+  
+      console.log(`[UserService] Usuario encontrado: ${user.email}`);
+      return user;
     }
 
     async handleGetAllUsers(userData) {
-      try {
-          console.log('[UserService] Obteniendo todos los usuarios');
-          
-          const users = await this.userRepository.findAll(userData?.filters || {});
-          
+          console.log('[UserService] Obteniendo todos los usuarios');    
+          const users = await this.userRepository.findAll(userData?.filters || {});  
           console.log(`[UserService] Usuarios encontrados: ${users.length}`);
 
           users.forEach((user, index) => {
@@ -114,38 +105,31 @@ async setupConsumers() {
           });
 
           return users;
-  
-      } catch (error) {
-          console.error('[UserService] Error al obtener usuarios:', error);
-          throw new Error('No se pudieron listar los usuarios: ' + error.message);
+    }
+
+    async handleUpdateUser(userData) {
+      
+      if (!userData || !userData.id) {
+        throw new Error('El campo "id" es requerido');
       }
-  }
 
-  async handleUpdateUser(userData) {
-    
-    if (!userData || !userData.id) {
-      throw new Error('El campo "id" es requerido');
-    }
+      if (!userData.updateFields || Object.keys(userData.updateFields).length === 0) {
+        throw new Error('Se requieren campos para actualizar');
+      }
 
-    if (!userData.updateFields || Object.keys(userData.updateFields).length === 0) {
-      throw new Error('Se requieren campos para actualizar');
-    }
-
-    console.log(`[UserService] Iniciando actualización para ID: ${userData.id}`);
-    console.log('[DEBUG] Campos a actualizar:', userData.updateFields);
-
-    try {
+      console.log(`[UserService] Iniciando actualización para ID: ${userData.id}`);
+      console.log('[DEBUG] Campos a actualizar:', userData.updateFields);
       const user = await this.userRepository.findById(userData.id);
-          
+            
       if (!user) {
           console.warn(`[UserService] Usuario no encontrado (ID: ${userData.id})`);
-          throw new Error('Usuario no encontrado');
+          return { error: 'Usuario no encontrado' };
       }
 
       if (userData.updateFields.email && userData.updateFields.email !== user.email) {
         const emailExists = await this.userRepository.findByEmail(userData.updateFields.email);
         if (emailExists) {
-            throw new Error('El nuevo email ya está en uso');
+          return { error: 'El email ya está en uso' };
         }
       }
 
@@ -154,7 +138,7 @@ async setupConsumers() {
         ...userData.updateFields,
         updatedAt: new Date() 
       };
-
+      
       const updatedUser = await this.userRepository.update(updatedData);
 
       console.log(`[UserService] Usuario actualizado: ${updatedUser.email}`);
@@ -165,12 +149,7 @@ async setupConsumers() {
       });
 
       return updatedUser;
-
-    } catch (error) {
-      console.error(`[UserService] Error al buscar usuario (ID: ${userData.id}):`, error);
-      throw error;
     }
-  }
 
   async handleDeleteUser(userData) {
  
@@ -180,28 +159,21 @@ async setupConsumers() {
 
     console.log(`[UserService] Iniciando eliminación para ID: ${userData.id}`);
 
-    try {
+    const user = await this.userRepository.findById(userData.id);
+      if (!user) {
+        console.warn(`[UserService] Usuario no encontrado (ID: ${userData.id})`);
+        return { error: 'Usuario no encontrado' };
+      }
 
-        const user = await this.userRepository.findById(userData.id);
-        if (!user) {
-            console.warn(`[UserService] Usuario no encontrado (ID: ${userData.id})`);
-            throw new Error('Usuario no encontrado');
-        }
+    const deletionResult = await this.userRepository.delete(userData.id);
 
-        const deletionResult = await this.userRepository.delete(userData.id);
-
-        console.log(`[UserService] Usuario eliminado: ${user.email} (ID: ${userData.id})`);
+    console.log(`[UserService] Usuario eliminado: ${user.email} (ID: ${userData.id})`);
         
-        return {
-            id: userData.id,
-            email: user.email,
-            deletedAt: new Date().toISOString()
-        };
-
-    } catch (error) {
-        console.error(`[UserService] Error al eliminar usuario (ID: ${userData.id}):`, error);
-        throw new Error(`Error en eliminación: ${error.message}`);
-    }
+    return {
+        id: userData.id,
+        email: user.email,
+        deletedAt: new Date().toISOString()
+    };
   }
 
 }
