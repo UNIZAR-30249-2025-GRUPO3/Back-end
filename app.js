@@ -7,6 +7,7 @@ const BD_UserRepository = require('./src/core/infraestructura/Persistencia/BD_Us
 const UserService = require('./src/core/aplicacion/Servicios/UserService');
 const UserController = require('./src/api/controllers/userController');
 const setupUserRoutes = require('./src/api/routes/userRoutes');
+const { swaggerUi, swaggerDocs } = require("./swagger");
 
 
 // Inicializar dependencias
@@ -23,6 +24,7 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/api/users', setupUserRoutes(userController));
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 // catch 404 and forward to error handler
 app.use((req, res, next) => {
@@ -34,9 +36,9 @@ app.use((req, res, next) => {
 });
 
 // error handler
-app.use(function(err, req, res, next) {
+app.use(function (err, req, res, next) {
   res.status(err.status || 500);
-  res.json({ 
+  res.json({
     error: err.message || 'Internal Server Error',
     stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
   });
