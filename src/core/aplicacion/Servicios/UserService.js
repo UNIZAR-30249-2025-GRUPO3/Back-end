@@ -135,14 +135,13 @@ class UserService {
         }
       }
 
-      const updatedUser = {
-        id: user.id,
-        name: userData.name || user.name,
-        email: userData.email || user.email,
-        password: userData.password || user.password,
-        role: userData.role || user.role,
-        department: userData.department || user.department
-      }
+      const updatedData = {
+        ...user.toObject ? user.toObject() : user,
+        ...userData.updateFields,
+        updatedAt: new Date() 
+      };
+      
+      const updatedUser = await this.userRepository.update(updatedData);
 
 
       console.log(`[UserService] Usuario actualizado: ${updatedUser.email}`);

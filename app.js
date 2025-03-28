@@ -10,7 +10,7 @@ const setupUserRoutes = require('./src/api/routes/userRoutes');
 
 
 // Inicializar dependencias
-//const userRepository = new BD_UserRepository();
+const userRepository = new BD_UserRepository();
 const userService = new UserService();
 const userController = new UserController();
 
@@ -36,7 +36,7 @@ app.use((req, res, next) => {
 // error handler
 app.use(function(err, req, res, next) {
   res.status(err.status || 500);
-  res.json({ // ← Cambia esto
+  res.json({ 
     error: err.message || 'Internal Server Error',
     stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
   });
