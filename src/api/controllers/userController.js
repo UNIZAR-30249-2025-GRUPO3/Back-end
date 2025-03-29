@@ -18,7 +18,7 @@ class UserController {
 
       const consumer = async (response, respCorrelationId) => {
         if (respCorrelationId === correlationId) {
-          console.log('[Cliente] Respuesta recibida:', response);
+          //console.log('[Cliente] Respuesta recibida:', response);
           if (response.error) {
             res.status(400).json({ error: response.error });
           } else {
@@ -49,11 +49,11 @@ class UserController {
 
       const consumer = async (response, respCorrelationId) => {
         if (respCorrelationId === correlationId) {
-          console.log('[Cliente] Respuesta recibida:', response);
+          //console.log('[Cliente] Respuesta recibida:', response);
           if (response.error) {
             res.status(400).json({ error: response.error });
           } else {
-            res.status(201).json(response);
+            res.status(200).json(response);
           }
           await messageBroker.removeConsumer('user_responses');
         }
@@ -82,7 +82,7 @@ class UserController {
 
       const consumer = async (response, respCorrelationId) => {
         if (respCorrelationId === correlationId) {
-          console.log('[Cliente] Respuesta recibida:', response);
+          //console.log('[Cliente] Respuesta recibida:', response);
           if (response.error) {
             res.status(400).json({ error: response.error });
           } else {
@@ -112,11 +112,11 @@ class UserController {
 
       const consumer = async (response, respCorrelationId) => {
         if (respCorrelationId === correlationId) {
-          console.log('[Cliente] Respuesta recibida:', response);
+          //console.log('[Cliente] Respuesta recibida:', response);
           if (response.error) {
             res.status(400).json({ error: response.error });
           } else {
-            res.status(201).json(response);
+            res.status(204).json(response);
           }
           await messageBroker.removeConsumer('user_responses');
         }
@@ -141,11 +141,11 @@ class UserController {
 
       const consumer = async (response, respCorrelationId) => {
         if (respCorrelationId === correlationId) {
-          console.log('[Cliente] Respuesta recibida:', response);
+          //console.log('[Cliente] Respuesta recibida:', response);
           if (response.error) {
             res.status(400).json({ error: response.error });
           } else {
-            res.status(201).json(response);
+            res.status(200).json(response);
           }
           await messageBroker.removeConsumer('user_responses');
         }
@@ -171,27 +171,30 @@ class UserController {
 
       const consumer = async (response, respCorrelationId) => {
         if (respCorrelationId === correlationId) {
-          console.log('[Cliente] Respuesta recibida:', response);
+          //console.log('[Cliente] Respuesta recibida:', response);
 
-          if (response.error) {
-            return res.status(400).json({ error: response.error });
+          try {
+            if (response.error) {
+              res.status(400).json({ error: response.error });
+            } else {
+              req.session.user = { user_id: response.id, role: response.role.roles };
+  
+              res.status(200).json({
+                message: "OK",
+                user: { user_id: req.session.user.user_id, role: req.session.user.role }
+              });
+            }
+          } finally {
+            // Always remove the consumer regardless of success or error
+            await messageBroker.removeConsumer(replyToQueue);
           }
-
-          req.session.user = { user_id: response.id, role: response.role.roles };
-
-          res.status(200).json({
-            message: "OK",
-            user: { user_id: req.session.user.user_id, role: req.session.user.role }
-          });
-
-          await messageBroker.removeConsumer(replyToQueue);
         }
       };
 
       messageBroker.consume(replyToQueue, consumer);
 
     } catch (err) {
-      console.error(err.message);
+      //console.error(err.message);
       res.status(500).send("Server Error");
     }
   }
