@@ -177,7 +177,7 @@ class UserController {
             return res.status(400).json({ error: response.error });
           }
 
-          req.session.user = { user_id: response.id, role: response.role };
+          req.session.user = { user_id: response.id, role: response.role.roles };
 
           res.status(200).json({
             message: "OK",

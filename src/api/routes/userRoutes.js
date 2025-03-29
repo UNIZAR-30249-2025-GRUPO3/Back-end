@@ -95,6 +95,39 @@ function setupUserRoutes(userController) {
   router.post('/', (req, res) => userController.createUser(req, res));
 
   /**
+* @swagger
+* /api/users/login:
+*   post:
+*     summary: Iniciar sesión de un usuario
+*     description: Permite a un usuario iniciar sesión proporcionando su email y contraseña.
+*     tags: [Users]
+*     requestBody:
+*       required: true
+*       content:
+*         application/json:
+*           schema:
+*             type: object
+*             required:
+*               - email
+*               - password
+*           example:
+*             email: "john@example.com"
+*             password: "securepassword"
+*     responses:
+*       200:
+*         description: Login exitoso, devuelve un token JWT.
+*         content:
+*           application/json:
+*             example:
+*               token: "jwt_token_example"
+*       400:
+*         description: Error en la solicitud (credenciales inválidas).
+*       500:
+*         description: Error en el servidor
+*/
+  router.post('/login', (req, res) => userController.login(req, res));
+
+  /**
  * @swagger
  * /api/users/search/{id}:
  *   get:
@@ -128,14 +161,14 @@ function setupUserRoutes(userController) {
  *       500:
  *         description: Error en el servidor
  */
-  router.get('/search/:id', (req, res) => userController.getUserById(req, res));
+  router.get('/search/:id', /*isAuthenticated, gerenteAuthorized, */(req, res) => userController.getUserById(req, res));
 
   /**
  * @swagger
  * /api/users/{id}:
  *   put:
- *     summary: Actualizar información de un usuario por ID
- *     description: Actualiza los datos de un usuario existente usando su ID. Solo se actualizan los campos proporcionados en el cuerpo de la solicitud.
+ *     summary: Actualizar información de un usuario por ID. Hace falta haber iniciado sesión como gerente para poder ejecutar la operación.
+ *     description: Actualiza los datos de un usuario existente usando su ID. Solo se actualizan los campos proporcionados en el cuerpo de la solicitud. Hace falta haber iniciado sesión como gerente para poder ejecutar la operación.
  *     tags: [Users]
  *     parameters:
  *       - in: path
@@ -176,14 +209,14 @@ function setupUserRoutes(userController) {
  *       500:
  *         description: Error en el servidor
  */
-  router.put('/:id', (req, res) => userController.updateUser(req, res));
+  router.put('/:id', isAuthenticated, gerenteAuthorized, (req, res) => userController.updateUser(req, res));
 
   /**
  * @swagger
  * /api/users/{id}:
  *   delete:
- *     summary: Eliminar un usuario por ID
- *     description: Elimina un usuario de la base de datos usando su ID.
+ *     summary: Eliminar un usuario por ID.  Hace falta haber iniciado sesión como gerente para poder ejecutar la operación.
+ *     description: Elimina un usuario de la base de datos usando su ID. Hace falta haber iniciado sesión como gerente para poder ejecutar la operación.
  *     tags: [Users]
  *     parameters:
  *       - in: path
@@ -208,7 +241,7 @@ function setupUserRoutes(userController) {
  *       500:
  *         description: Error en el servidor
  */
-  router.delete('/:id', (req, res) => userController.deleteUser(req, res));
+  router.delete('/:id', isAuthenticated, gerenteAuthorized, (req, res) => userController.deleteUser(req, res));
 
   /**
  * @swagger
@@ -238,9 +271,26 @@ function setupUserRoutes(userController) {
  *       500:
  *         description: Error en el servidor
  */
-  router.get('/', (req, res) => userController.getAllUsers(req, res));
+  router.get('/', /*isAuthenticated, gerenteAuthorized, */(req, res) => userController.getAllUsers(req, res));
 
-  router.get('/login', (req, res) => userController.login(req, res));
+  /**
+ * @swagger
+ * /api/users/logout:
+ *   get:
+ *     summary: Cerrar sesión del usuario. Importante hacer logout antes de cerrar el swagger.
+ *     description: Cierra la sesión actual del usuario eliminando sus datos de sesión. Importamte hacer logout antes de cerrar el swagger porque aunque se reinicie la base de datos la cookie se guarda en el navegador y tendra los datos aun del ultimo login.
+ *     tags: [Users]
+ *     responses:
+ *       200:
+ *         description: Sesión cerrada exitosamente
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: "Closed session"
+ *       500:
+ *         description: Error al cerrar la sesión
+ */
+
   router.get('/logout', (req, res) => userController.logout(req, res));
 
   return router;

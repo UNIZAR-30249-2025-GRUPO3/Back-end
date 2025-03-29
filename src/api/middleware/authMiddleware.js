@@ -3,17 +3,17 @@ function isAuthenticated(req, res, next) {
         return next();
     } else {
         return res.status(401).json({
-            error: 'No session'
+            error: 'No hay sesión activa'
         });
     }
 }
 
 function gerenteAuthorized(req, res, next) {
-    if (req.session.user.role === 'gerente') {
+    if (req.session.user.role.includes('gerente')) {
         return next();
     } else {
         return res.status(403).json({
-            error: 'No admin permission'
+            error: 'No tienes permisos de gerente'
         });
     }
 }
