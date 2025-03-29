@@ -2,6 +2,9 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
+const sessions = require('client-sessions');
+
+
 
 const BD_UserRepository = require('./src/core/infraestructura/Persistencia/BD_UserRepository');
 const UserService = require('./src/core/aplicacion/Servicios/UserService');
@@ -16,6 +19,13 @@ const userService = new UserService();
 const userController = new UserController();
 
 var app = express();
+
+
+app.use(sessions({
+  cookieName: 'session',
+  secret: 'secret'
+}));
+
 
 app.use(logger('dev'));
 app.use(express.json());

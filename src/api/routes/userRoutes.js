@@ -53,6 +53,8 @@ const express = require('express');
 
 
 
+const { isAuthenticated, gerenteAuthorized } = require('../middleware/authMiddleware');
+
 function setupUserRoutes(userController) {
   const router = express.Router();
 
@@ -94,7 +96,7 @@ function setupUserRoutes(userController) {
 
   /**
  * @swagger
- * /api/users/{id}:
+ * /api/users/search/{id}:
  *   get:
  *     summary: Obtener información de un usuario por ID
  *     description: Recupera los datos de un usuario existente usando su ID.
@@ -126,7 +128,7 @@ function setupUserRoutes(userController) {
  *       500:
  *         description: Error en el servidor
  */
-  router.get('/:id', (req, res) => userController.getUserById(req, res));
+  router.get('/search/:id', (req, res) => userController.getUserById(req, res));
 
   /**
  * @swagger
@@ -237,6 +239,9 @@ function setupUserRoutes(userController) {
  *         description: Error en el servidor
  */
   router.get('/', (req, res) => userController.getAllUsers(req, res));
+
+  router.get('/login', (req, res) => userController.login(req, res));
+  router.get('/logout', (req, res) => userController.logout(req, res));
 
   return router;
 }
