@@ -184,11 +184,11 @@ function setupUserRoutes(userController) {
  *           schema:
  *             $ref: '#/components/schemas/User'
  *           example:
- *               name: "John Doe"
- *               email: "john@example.com"
- *               password: "securepassword"
- *               role: ["gerente"]
- *               department: ""
+ *             name: "John Doe"
+ *             email: "john@example.com"
+ *             password: "securepassword"
+ *             role: ["gerente"]
+ *             department: ""
  *     responses:
  *       200:
  *         description: Usuario actualizado exitosamente
@@ -204,6 +204,10 @@ function setupUserRoutes(userController) {
  *               department: null
  *       400:
  *         description: Error en la solicitud (campos inválidos o datos inconsistentes)
+ *       401:
+ *         description: No se ha iniciado sesión
+ *       403:
+ *         description: No tienes permisos para realizar esta acción
  *       404:
  *         description: Usuario no encontrado
  *       500:
@@ -236,6 +240,10 @@ function setupUserRoutes(userController) {
  *               deletedAt: "2025-03-29T00:00:00.000Z"
  *       400:
  *         description: Error en la solicitud (ID no válido)
+ *       401:
+ *         description: No se ha iniciado sesión
+ *       403:
+ *         description: No tienes permisos para realizar esta acción
  *       404:
  *         description: Usuario no encontrado
  *       500:
