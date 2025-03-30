@@ -28,7 +28,7 @@ npm start
 
 ## 🌐 Acceso al backend
 
-Actualmente, el backend está disponible en **localhost** en el siguiente puerto (según configuración en el código):
+Actualmente, el backend está disponible en **localhost** en el siguiente puerto:
 
 ```sh
 http://localhost:3000

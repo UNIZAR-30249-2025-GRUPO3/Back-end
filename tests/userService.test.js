@@ -238,6 +238,19 @@ describe('🔹 UserService', () => {
             await expect(userService.handleCreateUser(invalidUserData))
                 .rejects.toThrow('El rol no permite estar adscrito a un departamento');
         });
+
+        it('Da error cuando los roles no se dan como un array', async () => {
+            const invalidUserData = {
+                name: 'Test User',
+                email: 'test@example.com',
+                password: 'password123',
+                role:'gerente',  
+                department: null
+            };
+            
+            await expect(userService.handleCreateUser(invalidUserData))
+                .rejects.toThrow("Los roles deben proporcionarse como un array.");
+        });
     });
     
     describe('📌 handleGetUserById', () => {
