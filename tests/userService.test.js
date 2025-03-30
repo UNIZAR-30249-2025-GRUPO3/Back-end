@@ -439,7 +439,7 @@ describe('🔹 UserService', () => {
         validRoleUpdateCases.forEach(({ role }) => {
             it(`Se actualizan los roles: ${role.join(', ')}`, async () => {
 
-                const updateFields = { role };  // Se elimina también el departamento asignado
+                const updateFields = { role }; 
 
                 const updatedUser = {
                     ...existingUser,
@@ -700,7 +700,7 @@ describe('🔹 UserService', () => {
     });
 
     describe('📌 Validaciones de roles y departamentos específicos', () => {
-        
+
         it('Valida que un docente-investigador pueda tener departamento', async () => {
             const validUserData = {
                 name: 'Test User',
