@@ -129,67 +129,71 @@ class UserService {
   }
 
   async handleUpdateUser(userData) {
-
     if (!userData || !userData.id) {
       throw new Error('El campo "id" es requerido');
     }
-
+  
     if (!userData.updateFields || Object.keys(userData.updateFields).length === 0) {
       throw new Error('Se requieren campos para actualizar');
     }
-
+  
     console.log(`[UserService] Iniciando actualización para ID: ${userData.id}`);
     console.log('[DEBUG] Campos a actualizar:', userData.updateFields);
     
     const user = await this.userRepository.findById(userData.id);
-
+  
     if (!user) {
       console.warn(`[UserService] Usuario no encontrado (ID: ${userData.id})`);
       throw new Error('Usuario no encontrado');
     }
-
+  
     if (userData.updateFields.email && userData.updateFields.email !== user.email) {
       const emailExists = await this.userRepository.findByEmail(userData.updateFields.email);
       if (emailExists) {
         throw new Error('El email ya está en uso');
       }
     }
-
+  
+    const userObj = user.toObject ? user.toObject() : user;
+    
+    const currentRoles = userObj.role && userObj.role.roles ? userObj.role.roles : [];
+    
     const updatedData = {
-      ...user.toObject ? user.toObject() : user, 
-      ...userData.updateFields, 
+      ...userObj,
+      ...userData.updateFields,
       updatedAt: new Date(),
     };
-
+  
     if ("department" in userData.updateFields) {
       updatedData.department = userData.updateFields.department; 
     } else {
-      updatedData.department = null; 
+      updatedData.department = userObj.department ? userObj.department.name : null;
     }
     
-
+    const rolesToUse = userData.updateFields.role || currentRoles;
+    
     try {
       new User(
         userData.id, 
         updatedData.name,
         updatedData.email,
         updatedData.password,
-        updatedData.role,
+        rolesToUse, 
         updatedData.department
       );
     } catch (error) {
       throw new Error(error.message);
     }
-
+  
     const updatedUser = await this.userRepository.update(updatedData);
-
+  
     console.log(`[UserService] Usuario actualizado: ${updatedUser.email}`);
     console.log('[DEBUG] Datos finales:', {
       _id: updatedUser.id,
       email: updatedUser.email,
       changes: userData.updateFields
     });
-
+  
     return updatedUser;
   }
 
