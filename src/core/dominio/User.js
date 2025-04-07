@@ -1,5 +1,5 @@
-const Role = require('../ObjetosValor/Role');
-const Department = require('../ObjetosValor/Department');
+const Role = require('./Role');
+const Department = require('./Department');
 
 class User {
 

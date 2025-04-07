@@ -1,9 +1,9 @@
-const UserService = require('../src/core/aplicacion/Servicios/UserService');
+const UserService = require('../src/core/aplicacion/UserService');
 const messageBroker = require('../src/core/infraestructura/messageBroker');
-const User = require('../src/core/dominio/Entidades/User');
+const User = require('../src/core/dominio/User');
 
 jest.mock('../src/core/infraestructura/messageBroker');
-jest.mock('../src/core/infraestructura/Persistencia/BD_UserRepository');
+jest.mock('../src/core/infraestructura/BD_UserRepository');
 
 describe('🔹 UserService', () => {
     let userService;

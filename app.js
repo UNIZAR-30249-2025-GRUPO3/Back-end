@@ -4,28 +4,23 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 const sessions = require('client-sessions');
 
-
-
-const BD_UserRepository = require('./src/core/infraestructura/Persistencia/BD_UserRepository');
-const UserService = require('./src/core/aplicacion/Servicios/UserService');
+const BD_UserRepository = require('./src/core/infraestructura/BD_UserRepository');
+const UserService = require('./src/core/aplicacion/UserService');
 const UserController = require('./src/api/controllers/userController');
 const setupUserRoutes = require('./src/api/routes/userRoutes');
 const { swaggerUi, swaggerDocs } = require("./swagger");
 
-
-// Inicializar dependencias
+// Inicializar dependencias (userRepository y userService no se usan pero necesitamos que se inicialicen)
 const userRepository = new BD_UserRepository();
 const userService = new UserService();
 const userController = new UserController();
 
 var app = express();
 
-
 app.use(sessions({
   cookieName: 'session',
   secret: 'secret'
 }));
-
 
 app.use(logger('dev'));
 app.use(express.json());

@@ -1,6 +1,6 @@
-const messageBroker = require('../../infraestructura/messageBroker');
-const BD_UserRepository = require('../../infraestructura/Persistencia/BD_UserRepository');
-const User = require('../../dominio/Entidades/User');
+const messageBroker = require('../infraestructura/messageBroker');
+const BD_UserRepository = require('../infraestructura/BD_UserRepository');
+const User = require('../dominio/User');
 
 class UserService {
 

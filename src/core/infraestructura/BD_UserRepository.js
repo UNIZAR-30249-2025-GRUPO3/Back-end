@@ -1,7 +1,7 @@
-const UserRepository = require('../../dominio/Repositorios/UserRepository');
-const User = require('../../dominio/Entidades/User');
+const UserRepository = require('../dominio/UserRepository');
+const User = require('../dominio/User');
 
-class PostgresUserRepository extends UserRepository {
+class BD_UserRepository extends UserRepository {
 
     // DEMOMENTO LA PERSISNTENCIA SE HACE EN MEMORIA PARA PRUEBAS - LUEGO PASAR A BD
 
@@ -64,4 +64,4 @@ class PostgresUserRepository extends UserRepository {
     }
 }
 
-module.exports = PostgresUserRepository;
+module.exports = BD_UserRepository;
