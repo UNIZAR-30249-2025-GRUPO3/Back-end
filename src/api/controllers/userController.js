@@ -43,7 +43,6 @@ class UserController {
         operation: 'getUserById',
         data: {
           id: req.params.id,
-          email: req.params.email
         }
       }, correlationId, replyToQueue);
 
@@ -86,7 +85,7 @@ class UserController {
           if (response.error) {
             res.status(400).json({ error: response.error });
           } else {
-            res.status(201).json(response);
+            res.status(200).json(response);
           }
           await messageBroker.removeConsumer('user_responses');
         }
@@ -116,7 +115,7 @@ class UserController {
           if (response.error) {
             res.status(400).json({ error: response.error });
           } else {
-            res.status(204).json(response);
+            res.status(200).json(response);
           }
           await messageBroker.removeConsumer('user_responses');
         }

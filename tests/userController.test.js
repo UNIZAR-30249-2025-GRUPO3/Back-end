@@ -216,7 +216,7 @@ describe('🔹 UserController', () => {
       
       await messageBroker.mockConsumerCallback(mockResponse, mockUuid);
       
-      expect(res.status).toHaveBeenCalledWith(201);
+      expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith(mockResponse);
       expect(messageBroker.removeConsumer).toHaveBeenCalledWith('user_responses');
     });
@@ -269,7 +269,7 @@ describe('🔹 UserController', () => {
       
       await messageBroker.mockConsumerCallback(mockResponse, mockUuid);
       
-      expect(res.status).toHaveBeenCalledWith(204);
+      expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith(mockResponse);
       expect(messageBroker.removeConsumer).toHaveBeenCalledWith('user_responses');
     });
