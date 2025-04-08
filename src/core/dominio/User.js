@@ -1,19 +1,13 @@
-/**
- * AGREGADO: User
- * 
- * Esta clase representa el Agregado User, donde:
- * - User es la Entidad Raíz del agregado
- * - Role y Department son Objetos de Valor dentro del agregado
- */
-
 const Role = require('./Role');
 const Department = require('./Department');
 
 /**
- * User - Entidad Raíz del Agregado
- * - Tiene identidad única (id)
- * - Contiene objetos de valor (Role, Department)
- * - Mantiene invariantes del agregado mediante validaciones
+ * User.js
+ * 
+ * ENTIDAD RAÍZ: User es la entidad principal con identidad única (id)
+ * AGREGADO: User forma un agregado que encapsula Role y Department
+ * - Mantiene la consistencia y las reglas de negocio del agregado
+ * - Protege sus invariantes mediante validaciones internas
  */
 class User {
 
@@ -23,13 +17,13 @@ class User {
       this.validateUserInput(id, name, email, password, role);
 
       // Propiedades de la entidad raíz
-      this.id = id;
+      this.id = id;   // Identificador único de la entidad
       this.name = name;
       this.email = email;
       this.password = password;
-      this.role = new Role(role);
 
-      // Objetos de valor dentro del límite del agregado
+      // OBJETOS VALOR: Inmutables y sin identidad propia
+      this.role = new Role(role);
       if (department) {
         this.department = new Department(department);
       } else {
@@ -40,9 +34,7 @@ class User {
       this.validateRoleDepartment();
     }
 
-    /**
-     * Método que valida las invariantes básicas del agregado
-     */
+    // ASERCIÓN: Método que valida las invariantes básicas del agregado
     validateUserInput(id, name, email, password, role) {
 
       if (!id) {
@@ -67,11 +59,7 @@ class User {
       }
     }
 
-
-     /**
-     * Método que valida la relación entre rol y departamento
-     * Mantiene la consistencia entre objetos de valor dentro del agregado
-     */
+    // ASERCIÓN: Método que valida la relación entre rol y departamento
     validateRoleDepartment() {
       const rolesWithoutDepartment = ["estudiante", "conserje", "gerente"];
   

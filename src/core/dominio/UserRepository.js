@@ -1,3 +1,10 @@
+/**
+ * UserRepository.js
+ * 
+ * INTERFAZ REVELADA: Define el contrato para la persistencia del agregado User
+ * - Abstrae la infraestructura de persistencia del dominio
+ * - Permite intercambiar implementaciones sin afectar al dominio
+ */
 class UserRepository {
 
     async findById(id) {

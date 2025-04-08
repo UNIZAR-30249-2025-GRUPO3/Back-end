@@ -1,15 +1,20 @@
 const User = require('./User'); 
 
 /**
- * UserFactory - Fábrica para la creación de agregados User
- * Encapsula la lógica de creación y validación inicial
+ * UserFactory.js
+ * 
+ * FACTORÍA: Encapsula la creación de agregados User
+ * - Oculta la complejidad de la instanciación
+ * - Asegura que el agregado se crea en un estado válido
  */
 class UserFactory {
   
+    // FUNCIÓN FACTORÍA: Crea un usuario estándar
     static createStandardUser(id, name, email, password, role, department) {
         return new User(id, name, email, password, role, department);
     }
     
+    // FUNCIÓN FACTORÍA: Crea un usuario a partir de datos existentes
     static createFromData(userData) {
         return new User(
             userData.id,

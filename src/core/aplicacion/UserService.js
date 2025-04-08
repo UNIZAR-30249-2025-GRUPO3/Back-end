@@ -2,16 +2,27 @@ const messageBroker = require('../infraestructura/messageBroker');
 const BD_UserRepository = require('../infraestructura/BD_UserRepository');
 const UserFactory = require('../dominio/UserFactory');
 
+/**
+ * UserService.js
+ * 
+ * SERVICIO DE APLICACIÓN: 
+ * - Implementa casos de uso específicos para el usuario
+ * - Coordina el flujo de datos entre el dominio y la infraestructura
+ */
 class UserService {
 
   constructor() {
+    // Dependencias de infraestructura
     this.userRepository = new BD_UserRepository();
     this.messageBroker = messageBroker; // Guarda la instancia
+
+    // Inicialización de consumidores de mensajes
     this.setupConsumers().catch(err => {
       console.error('Error al iniciar consumidor:', err);
     });
   }
 
+  // SERVICIO DISTRIBUIDO: Configuración para comunicación asíncrona
   async setupConsumers() {
     try {
       await this.messageBroker.connect();
@@ -60,8 +71,16 @@ class UserService {
     }
   }
 
+  // ================================================
+  // Métodos de servicio que implementan casos de uso
+  // ================================================
 
+  // ==========================
+  // CASO DE USO: Crear usuario
+  // ==========================
   async handleCreateUser(userData) {
+
+    // Verifica precondiciones del caso de uso
     console.log('[DEBUG] Procesando creación de usuario:', userData.email);
     const existingUser = await this.userRepository.findByEmail(userData.email);
 
@@ -69,6 +88,7 @@ class UserService {
       return { error: 'El email ya está en uso' };
     }
 
+    // Validación del dominio mediante factoría
     try {
       UserFactory.createStandardUser(
         "temp",
@@ -82,6 +102,7 @@ class UserService {
       throw new Error(error.message);
     }
 
+    // Persistencia mediante repositorio
     const user = {
       name: userData.name,
       email: userData.email,
@@ -94,13 +115,19 @@ class UserService {
     return savedUser;
   }
 
+  // ===================================
+  // CASO DE USO: Obtener usuario por id
+  // ===================================
   async handleGetUserById(userData) {
+
+    // Verifica precondiciones del caso de uso
     if (!userData || !userData.id) {
       throw new Error('El campo "id" es requerido');
     }
 
     console.log(`[UserService] Buscando usuario con ID: ${userData.id}`);
 
+    // Validación de existencia
     const user = await this.userRepository.findById(userData.id);
 
     if (!user) {
@@ -112,7 +139,10 @@ class UserService {
     return user;
   }
 
+  // CASO DE USO: Obtener todos los usuarios
   async handleGetAllUsers(userData) {
+
+    // Consulta al repositorio
     console.log('[UserService] Obteniendo todos los usuarios');
     const users = await this.userRepository.findAll(userData?.filters || {});
     console.log(`[UserService] Usuarios encontrados: ${users.length}`);
@@ -128,7 +158,12 @@ class UserService {
     return users;
   }
 
+  // ===============================
+  // CASO DE USO: Actualizar usuario
+  // ===============================
   async handleUpdateUser(userData) {
+
+    // Verifica precondiciones del caso de uso
     if (!userData || !userData.id) {
       throw new Error('El campo "id" es requerido');
     }
@@ -140,6 +175,7 @@ class UserService {
     console.log(`[UserService] Iniciando actualización para ID: ${userData.id}`);
     console.log('[DEBUG] Campos a actualizar:', userData.updateFields);
     
+    // Validación de existencia
     const user = await this.userRepository.findById(userData.id);
   
     if (!user) {
@@ -154,6 +190,7 @@ class UserService {
       }
     }
   
+    // Preservación del estado
     const userObj = user.toObject ? user.toObject() : user;
     
     const currentRoles = userObj.role && userObj.role.roles ? userObj.role.roles : [];
@@ -172,6 +209,7 @@ class UserService {
     
     const rolesToUse = userData.updateFields.role || currentRoles;
     
+    // Validación del dominio mediante factoría
     try {
       UserFactory.createFromData({
         id: userData.id, 
@@ -185,6 +223,7 @@ class UserService {
       throw new Error(error.message);
     }
   
+    // Persistencia mediante repositorio
     const updatedUser = await this.userRepository.update(updatedData);
   
     console.log(`[UserService] Usuario actualizado: ${updatedUser.email}`);
@@ -197,24 +236,31 @@ class UserService {
     return updatedUser;
   }
 
+  // =============================
+  // CASO DE USO: Eliminar usuario
+  // =============================
   async handleDeleteUser(userData) {
 
+    // Verifica precondiciones del caso de uso
     if (!userData || !userData.id) {
       throw new Error('El campo "id" es requerido');
     }
 
     console.log(`[UserService] Iniciando eliminación para ID: ${userData.id}`);
 
+    // Validación de existencia
     const user = await this.userRepository.findById(userData.id);
     if (!user) {
       console.warn(`[UserService] Usuario no encontrado (ID: ${userData.id})`);
       throw new Error('Usuario no encontrado');
     }
 
+    // Elminación mediante el repositorio
     const deletionResult = await this.userRepository.delete(userData.id);
 
     console.log(`[UserService] Usuario eliminado: ${user.email} (ID: ${userData.id})`);
 
+    // Confirmación de eliminación
     return {
       id: userData.id,
       email: user.email,
@@ -222,16 +268,21 @@ class UserService {
     };
   }
 
+  // =====================================
+  // CASO DE USO: Autenticación de usuario
+  // =====================================
   async handleLogin(loginData) {
     const { email, password } = loginData;
 
     console.log('[UserService] Buscando usuario con email:', email);
 
+    // Validación de existencia
     const user = await this.userRepository.findByEmail(email);
     if (!user) {
       throw new Error('Usuario no encontrado');
     }
 
+    // Validación de autenticación
     //const passwordMatch = await bcrypt.compare(password, user.password); util si encriptamos mas adelante
     if (user.password !== password) { // Passwordmatch si encriptamos
       throw new Error('Contraseña incorrecta');

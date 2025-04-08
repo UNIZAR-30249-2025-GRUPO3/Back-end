@@ -1,6 +1,14 @@
 const UserRepository = require('../dominio/UserRepository');
 const UserFactory = require('../dominio/UserFactory');
 
+/**
+ * BD_UserRepository.js
+ * 
+ * IMPLEMENTACIÓN CONCRETA DEL REPOSITORIO: 
+ * - Implementa la interfaz del repositorio
+ * - Pertenece a la capa de infraestructura
+ * - Se encarga de la persistencia real del agregado
+ */
 class BD_UserRepository extends UserRepository {
 
     // DEMOMENTO LA PERSISNTENCIA SE HACE EN MEMORIA PARA PRUEBAS - LUEGO PASAR A BD
