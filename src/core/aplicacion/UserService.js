@@ -1,6 +1,6 @@
 const messageBroker = require('../infraestructura/messageBroker');
 const BD_UserRepository = require('../infraestructura/BD_UserRepository');
-const User = require('../dominio/User');
+const UserFactory = require('../dominio/UserFactory');
 
 class UserService {
 
@@ -70,7 +70,7 @@ class UserService {
     }
 
     try {
-      new User(
+      UserFactory.createStandardUser(
         "temp",
         userData.name,
         userData.email,
@@ -173,14 +173,14 @@ class UserService {
     const rolesToUse = userData.updateFields.role || currentRoles;
     
     try {
-      new User(
-        userData.id, 
-        updatedData.name,
-        updatedData.email,
-        updatedData.password,
-        rolesToUse, 
-        updatedData.department
-      );
+      UserFactory.createFromData({
+        id: userData.id, 
+        name: updatedData.name,
+        email: updatedData.email,
+        password: updatedData.password,
+        role: rolesToUse, 
+        department: updatedData.department
+      });
     } catch (error) {
       throw new Error(error.message);
     }

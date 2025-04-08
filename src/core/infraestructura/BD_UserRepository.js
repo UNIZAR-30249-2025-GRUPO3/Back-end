@@ -1,5 +1,5 @@
 const UserRepository = require('../dominio/UserRepository');
-const User = require('../dominio/User');
+const UserFactory = require('../dominio/UserFactory');
 
 class BD_UserRepository extends UserRepository {
 
@@ -22,7 +22,7 @@ class BD_UserRepository extends UserRepository {
     
     async save(user) {
         const id = this.nextId;
-        const newUser = new User(
+        const newUser = UserFactory.createStandardUser(
             id,
             user.name,
             user.email,
@@ -42,14 +42,7 @@ class BD_UserRepository extends UserRepository {
           throw new Error('Usuario no encontrado');
         }
 
-        const updatedUser  = new User(
-            user.id,
-            user.name,
-            user.email,
-            user.password,
-            user.role,
-            user.department
-        );
+        const updatedUser = UserFactory.createFromData(user);
 
         this.users.set(updatedUser.id, updatedUser);
         return user;
