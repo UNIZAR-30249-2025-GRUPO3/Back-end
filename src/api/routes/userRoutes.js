@@ -95,39 +95,6 @@ function setupUserRoutes(userController) {
   router.post('/', (req, res) => userController.createUser(req, res));
 
   /**
-* @swagger
-* /api/users/login:
-*   post:
-*     summary: Iniciar sesión de un usuario
-*     description: Permite a un usuario iniciar sesión proporcionando su email y contraseña.
-*     tags: [Users]
-*     requestBody:
-*       required: true
-*       content:
-*         application/json:
-*           schema:
-*             type: object
-*             required:
-*               - email
-*               - password
-*           example:
-*             email: "john@example.com"
-*             password: "securepassword"
-*     responses:
-*       200:
-*         description: Login exitoso, devuelve un token JWT.
-*         content:
-*           application/json:
-*             example:
-*               token: "jwt_token_example"
-*       400:
-*         description: Error en la solicitud (credenciales inválidas).
-*       500:
-*         description: Error en el servidor
-*/
-  router.post('/login', (req, res) => userController.login(req, res));
-
-  /**
  * @swagger
  * /api/users/search/{id}:
  *   get:
@@ -280,26 +247,6 @@ function setupUserRoutes(userController) {
  *         description: Error en el servidor
  */
   router.get('/', /*isAuthenticated, gerenteAuthorized, */(req, res) => userController.getAllUsers(req, res));
-
-  /**
- * @swagger
- * /api/users/logout:
- *   get:
- *     summary: Cerrar sesión del usuario. Importante hacer logout antes de cerrar el swagger.
- *     description: Cierra la sesión actual del usuario eliminando sus datos de sesión. Importamte hacer logout antes de cerrar el swagger porque aunque se reinicie la base de datos la cookie se guarda en el navegador y tendra los datos aun del ultimo login.
- *     tags: [Users]
- *     responses:
- *       200:
- *         description: Sesión cerrada exitosamente
- *         content:
- *           application/json:
- *             example:
- *               message: "Closed session"
- *       500:
- *         description: Error al cerrar la sesión
- */
-
-  router.get('/logout', (req, res) => userController.logout(req, res));
 
   return router;
 }
