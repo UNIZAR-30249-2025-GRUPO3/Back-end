@@ -26,7 +26,7 @@ class UserService {
   async setupConsumers() {
     try {
       await this.messageBroker.connect();
-      console.log('[RabbitMQ] Consumidor conectado');
+      console.log('[RabbitMQ] Consumidor de usuario conectado');
 
       this.messageBroker.consume('user_operations', async (message, correlationId) => {
         if (!message || !message.operation) {

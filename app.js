@@ -4,19 +4,33 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 const sessions = require('client-sessions');
 
+// Repositorios
 const BD_UserRepository = require('./src/core/infraestructura/BD_UserRepository');
+
+// Servicios de aplicación
 const UserService = require('./src/core/aplicacion/UserService');
+const BuildingService = require('./src/core/aplicacion/BuildingService');
+
+// Controladores
 const UserController = require('./src/api/controllers/userController');
 const AuthController = require('./src/api/controllers/authController');
+const BuildingController = require('./src/api/controllers/buildingController');
+
+// Configuración de rutas
 const setupUserRoutes = require('./src/api/routes/userRoutes');
 const setupAuthRoutes = require('./src/api/routes/authRoutes');
+const setupBuildingRoutes = require('./src/api/routes/buildingRoutes');
+
+// Swagger
 const { swaggerUi, swaggerDocs } = require("./swagger");
 
 // Inicializar dependencias (userRepository y userService no se usan pero necesitamos que se inicialicen)
 const userRepository = new BD_UserRepository();
 const userService = new UserService();
+const buildingService = new BuildingService();
 const userController = new UserController();
 const authController = new AuthController();
+const buildingController = new BuildingController();
 
 var app = express();
 
@@ -34,6 +48,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Rutas de API
 app.use('/api/users', setupUserRoutes(userController));
 app.use('/api/auth', setupAuthRoutes(authController));
+app.use('/api/building', setupBuildingRoutes(buildingController));
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 // catch 404 and forward to error handler
