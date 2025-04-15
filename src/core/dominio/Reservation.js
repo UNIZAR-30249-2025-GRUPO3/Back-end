@@ -1,16 +1,16 @@
 /**
- * Booking.js
+ * Reservation.js
  * 
- * ENTIDAD RAÍZ: Booking es la entidad principal con identidad única (id)
- * AGREGADO: Booking forma un agregado que encapsula la información de las reservas
+ * ENTIDAD RAÍZ: Reservation es la entidad principal con identidad única (id)
+ * AGREGADO: Reservation forma un agregado que encapsula la información de las reservas
  * - Mantiene la consistencia y las reglas de negocio del agregado
  * - Protege sus invariantes mediante validaciones internas
  */
-class Booking {
+class Reservation {
     constructor(id, space, usageType, maxAttendees, startTime, duration, additionalDetails, category = null) {
         
         // Validaciones que mantienen la integridad del agregado
-        this.validateBookingInput(id, space, usageType, maxAttendees, startTime, duration, category);
+        this.validateReservationInput(id, space, usageType, maxAttendees, startTime, duration, category);
 
         // Propiedades de la entidad raíz
         this.id = id; // Identificador único de la entidad
@@ -29,7 +29,7 @@ class Booking {
     }
 
     // ASERCIÓN: Método que valida las invariantes básicas del agregado
-    validateBookingInput(id, space, usageType, maxAttendees, startTime, duration, category) {
+    validateReservationInput(id, space, usageType, maxAttendees, startTime, duration, category) {
 
         if (!id) {
             throw new Error("ERROR: Falta asignar un identificador");
@@ -64,4 +64,4 @@ class Booking {
 
 }
 
-module.exports = Booking;
+module.exports = Reservation;

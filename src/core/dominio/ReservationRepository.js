@@ -1,21 +1,21 @@
 /**
- * BookingRepository.js
+ * ReservationRepository.js
  * 
- * INTERFAZ REVELADA: Define el contrato para la persistencia del agregado booking
+ * INTERFAZ REVELADA: Define el contrato para la persistencia del agregado Reservation
  * - Abstrae la infraestructura de persistencia del dominio
  * - Permite intercambiar implementaciones sin afectar al dominio
  */
-class BookingRepository {
+class ReservationRepository {
 
     async findById(id) {
       throw new Error('Metodo no implementado');
     }
   
-    async save(booking) {
+    async save(Reservation) {
       throw new Error('Metodo no implementado');
     }
   
-    async fix(booking) {
+    async fix(Reservation) {
       throw new Error('Metodo no implementado');
     }
   
@@ -27,14 +27,14 @@ class BookingRepository {
       throw new Error('Metodo no implementado');
     }
 
-    async findInvalidBookings() {
+    async findInvalidReservations() {
         throw new Error('Metodo no implementado');
     }
 
-    async findAliveBookings() {
+    async findAliveReservations() {
         throw new Error('Metodo no implementado');
     }
 
   }
   
-module.exports = BookingRepository;
+module.exports = ReservationRepository;
