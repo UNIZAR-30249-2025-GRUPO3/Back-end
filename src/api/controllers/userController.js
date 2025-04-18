@@ -48,7 +48,8 @@ class UserController {
           if (response.error) {
             res.status(400).json({ error: response.error });
           } else {
-            res.status(200).json(response);
+            const status = operation === 'createUser' ? 201 : 200;
+            res.status(status).json(response);
           }
           await messageBroker.removeConsumer(this.replyToQueue);
         }
