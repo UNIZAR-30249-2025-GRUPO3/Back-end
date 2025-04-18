@@ -5,8 +5,10 @@ class MessageBroker {
   constructor() {
     this.connection = null;
     this.channel = null;
-    this.requestQueue = 'user_operations'; // Cola de solicitudes por defecto
-    this.responseQueue = 'user_responses'; // Cola para respuestas por defecto
+    this.requestQueue = 'user_operations'; // Cola de solicitudes para usuarios
+    this.responseQueue = 'user_responses'; // Cola para respuestas para usuarios
+    this.requestQueueB = 'building_operations'; // Cola de solicitudes para edificios
+    this.responseQueueB = 'building_responses'; // Cola para respuestas para edificios
     this.amqpUrl = 'amqps://xvrhrdqc:WoZh4rUov7sSoTNqbRssm1YbgRpc647a@kebnekaise.lmq.cloudamqp.com/xvrhrdqc';
     this.consumerTags = {};
   }
@@ -16,18 +18,20 @@ class MessageBroker {
     this.channel = await this.connection.createChannel();
     await this.channel.assertQueue(this.requestQueue, { durable: true });
     await this.channel.assertQueue(this.responseQueue, { durable: true }); 
+    await this.channel.assertQueue(this.requestQueueB, { durable: true });
+    await this.channel.assertQueue(this.responseQueueB, { durable: true }); 
     console.log('[RabbitMQ] Conectado a CloudAMQP');
   }
 
-  async publish(message, correlationId, replyToQueue, targetQueue = this.requestQueue) {
-    // Permitimos especificar la cola destino o usar la predeterminada
+  async publish(message, correlationId, replyToQueue, requestQueue) {
     await this.channel.sendToQueue(
-      targetQueue,
-      Buffer.from(JSON.stringify({ ...message, replyTo: replyToQueue })),
+      requestQueue,
+      Buffer.from(JSON.stringify({ ...message, replyTo: replyToQueue })), // Usamos replyTo dinámicamente
       { persistent: true, correlationId }
     );
   }
   
+
   async sendResponse(message, correlationId, replyToQueue) {
     await this.channel.sendToQueue(
       replyToQueue, 
@@ -36,10 +40,8 @@ class MessageBroker {
     );
   }
   
+
   async consume(queue, callback) {
-    // Aseguramos que la cola exista antes de consumirla
-    await this.channel.assertQueue(queue, { durable: true });
-    
     const { consumerTag } = await this.channel.consume(queue, async (msg) => {
       if (!msg || !msg.content) {
         console.error(`[RabbitMQ] Mensaje inválido en ${queue}:`, msg);
@@ -63,6 +65,7 @@ class MessageBroker {
     this.consumerTags[queue] = consumerTag; 
   }
   
+  
   async removeConsumer(queue) {
     if (this.consumerTags[queue]) {
       await this.channel.cancel(this.consumerTags[queue]); 
@@ -70,6 +73,8 @@ class MessageBroker {
       console.log(`[RabbitMQ] Consumidor en ${queue} eliminado`);
     }
   }
+  
+
 }
 
 module.exports = new MessageBroker();

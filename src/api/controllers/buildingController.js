@@ -4,142 +4,50 @@ const { v4: uuidv4 } = require('uuid');
 class BuildingController {
   constructor() {
     messageBroker.connect().catch(console.error);
-    this.buildingQueue = 'building_operations';
+    this.requestQueue = 'building_operations';
     this.responseQueue = 'building_responses';
   }
 
   async getBuildingInfo(req, res) {
-    try {
-      const correlationId = uuidv4();
-      const replyToQueue = this.responseQueue;
-
-      await messageBroker.channel.assertQueue(replyToQueue, { durable: true });
-
-      await messageBroker.publish({
-        operation: 'getBuildingInfo',
-        data: {}
-      }, correlationId, replyToQueue, this.buildingQueue);
-
-      const consumer = async (response, respCorrelationId) => {
-        if (respCorrelationId === correlationId) {
-          if (response.error) {
-            res.status(400).json({ error: response.error });
-          } else {
-            res.status(200).json(response);
-          }
-          await messageBroker.removeConsumer(replyToQueue);
-        }
-      };
-      messageBroker.consume(replyToQueue, consumer);
-
-    } catch (error) {
-      res.status(400).json({ error: error.message });
-    }
+    await this.sendMessage('getBuildingInfo', {}, res);
   }
 
   async getOccupancyPercentage(req, res) {
-    try {
-      const correlationId = uuidv4();
-      const replyToQueue = this.responseQueue;
-
-      await messageBroker.publish({
-        operation: 'getOccupancyPercentage',
-        data: {}
-      }, correlationId, replyToQueue, this.buildingQueue);
-
-      const consumer = async (response, respCorrelationId) => {
-        if (respCorrelationId === correlationId) {
-          if (response.error) {
-            res.status(400).json({ error: response.error });
-          } else {
-            res.status(200).json(response);
-          }
-          await messageBroker.removeConsumer(replyToQueue);
-        }
-      };
-      messageBroker.consume(replyToQueue, consumer);
-
-    } catch (error) {
-      res.status(400).json({ error: error.message });
-    }
+    await this.sendMessage('getOccupancyPercentage', {}, res);
   }
 
   async getOpeningHours(req, res) {
-    try {
-      const correlationId = uuidv4();
-      const replyToQueue = this.responseQueue;
-
-      await messageBroker.publish({
-        operation: 'getOpeningHours',
-        data: {}
-      }, correlationId, replyToQueue, this.buildingQueue);
-
-      const consumer = async (response, respCorrelationId) => {
-        if (respCorrelationId === correlationId) {
-          if (response.error) {
-            res.status(400).json({ error: response.error });
-          } else {
-            res.status(200).json(response);
-          }
-          await messageBroker.removeConsumer(replyToQueue);
-        }
-      };
-      messageBroker.consume(replyToQueue, consumer);
-
-    } catch (error) {
-      res.status(400).json({ error: error.message });
-    }
+    await this.sendMessage('getOpeningHours', {}, res);
   }
 
   async updateOccupancyPercentage(req, res) {
-    try {
-      const correlationId = uuidv4();
-      const replyToQueue = this.responseQueue;
-
-      if (!req.body.percentage || typeof req.body.percentage !== 'number') {
-        return res.status(400).json({ error: 'Se requiere un porcentaje válido' });
-      }
-
-      await messageBroker.publish({
-        operation: 'updateOccupancyPercentage',
-        data: {
-          percentage: req.body.percentage
-        }
-      }, correlationId, replyToQueue, this.buildingQueue);
-
-      const consumer = async (response, respCorrelationId) => {
-        if (respCorrelationId === correlationId) {
-          if (response.error) {
-            res.status(400).json({ error: response.error });
-          } else {
-            res.status(200).json(response);
-          }
-          await messageBroker.removeConsumer(replyToQueue);
-        }
-      };
-      messageBroker.consume(replyToQueue, consumer);
-
-    } catch (error) {
-      res.status(400).json({ error: error.message });
+    const { percentage } = req.body;
+    if (typeof percentage !== 'number') {
+      return res.status(400).json({ error: 'Se requiere un porcentaje válido' });
     }
+    await this.sendMessage('updateOccupancyPercentage', { percentage }, res);
   }
 
   async updateOpeningHours(req, res) {
+    const { day, hours } = req.body;
+    if (!day || !hours) {
+      return res.status(400).json({ error: 'Se requieren datos válidos para actualizar horarios' });
+    }
+    await this.sendMessage('updateOpeningHours', { day, hours }, res);
+  }
+
+  async sendMessage(operation, data, res) {
+    const correlationId = uuidv4();
+
     try {
-      const correlationId = uuidv4();
-      const replyToQueue = this.responseQueue;
+      await messageBroker.channel.assertQueue(this.responseQueue, { durable: true });
 
-      if (!req.body.day || !req.body.hours) {
-        return res.status(400).json({ error: 'Se requieren datos válidos para actualizar horarios' });
-      }
-
-      await messageBroker.publish({
-        operation: 'updateOpeningHours',
-        data: {
-          day: req.body.day,
-          hours: req.body.hours
-        }
-      }, correlationId, replyToQueue, this.buildingQueue);
+      await messageBroker.publish(
+        { operation, data },
+        correlationId,
+        this.responseQueue,
+        this.requestQueue
+      );
 
       const consumer = async (response, respCorrelationId) => {
         if (respCorrelationId === correlationId) {
@@ -148,11 +56,11 @@ class BuildingController {
           } else {
             res.status(200).json(response);
           }
-          await messageBroker.removeConsumer(replyToQueue);
+          await messageBroker.removeConsumer(this.responseQueue);
         }
       };
-      messageBroker.consume(replyToQueue, consumer);
 
+      messageBroker.consume(this.responseQueue, consumer);
     } catch (error) {
       res.status(400).json({ error: error.message });
     }
