@@ -69,7 +69,8 @@ describe('🔹 AuthController', () => {
                 }
                 },
                 mockUuid,
-                'user_responses'
+                'user_responses',
+                'user_operations'
             );
             
             await messageBroker.mockConsumerCallback(mockResponse, mockUuid);
