@@ -12,11 +12,12 @@ class AuthController {
     try {
       const correlationId = uuidv4();
       const replyToQueue = 'user_responses';
+      const requestQueue = 'user_operations';
 
       await messageBroker.publish({
         operation: 'login',
         data: { email, password }
-      }, correlationId, replyToQueue);
+      }, correlationId, replyToQueue,requestQueue);
 
       const consumer = async (response, respCorrelationId) => {
         if (respCorrelationId === correlationId) {
