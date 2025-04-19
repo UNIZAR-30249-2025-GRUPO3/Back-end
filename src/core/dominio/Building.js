@@ -1,6 +1,6 @@
 class Building {
 
-    // SERÍA NECESARIO ALMACENARLO EN LA BD?? - ahora si se cae se pierde lo guardado
+    // SERÍA NECESARIO ALMACENARLO EN LA BD?? - ahora si se cae se pierde lo guardado **********************************************
       
     constructor() {
 
