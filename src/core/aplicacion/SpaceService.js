@@ -1,5 +1,6 @@
 const messageBroker = require('../infraestructura/messageBroker');
 const BD_SpaceRepository = require('../infraestructura/BD_SpaceRepository');
+const BuildingService = require('./BuildingService');
 const SpaceFactory = require('../dominio/SpaceFactory');
 
 /**
@@ -14,6 +15,7 @@ class SpaceService {
   constructor() {
     // Dependencias de infraestructura
     this.spaceRepository = new BD_SpaceRepository();
+    this.buildingService = new BuildingService({ initializeConsumer: false });
     this.messageBroker = messageBroker; // Guarda la instancia
 
     this.buildingQueueName = 'building_operations';
@@ -82,19 +84,6 @@ class SpaceService {
     }
   }
 
-  // Método auxiliar para obtener información del edificio - ES PROBABLE QUE NO HAGA FALTA REALIZAR ESTO CON EL BROKER ************
-  async getBuildingInfo(operation, data = {}) {
-    try {
-      return await this.messageBroker.sendRequest(
-        this.buildingQueueName,
-        { operation, data }
-      );
-    } catch (error) {
-      console.error(`Error al obtener información del edificio (${operation}):`, error);
-      throw new Error(`No se pudo obtener información del edificio: ${error.message}`);
-    }
-  }
-
   // ================================================
   // Métodos de servicio que implementan casos de uso
   // ================================================
@@ -109,12 +98,12 @@ class SpaceService {
     try {
       // Obtener valores del edificio si son nulos
       if (spaceData.maxUsagePercentage === null) {
-        const buildingInfo = await this.getBuildingInfo('getOccupancyPercentage');
+        const buildingInfo = await this.buildingService.handleGetOccupancyPercentage();
         spaceData.maxUsagePercentage = buildingInfo.occupancyPercentage;
       }
       
       if (spaceData.customSchedule === null) {
-        const buildingHours = await this.getBuildingInfo('getOpeningHours');
+        const buildingHours = await this.buildingService.handleGetOpeningHours();
         spaceData.customSchedule = buildingHours.openingHours;
       }
 
@@ -167,12 +156,12 @@ class SpaceService {
 
       // Se completa la información del edificio si es necesario
       if (space.maxUsagePercentage === null) {
-        const buildingInfo = await this.getBuildingInfo('getOccupancyPercentage');
+        const buildingInfo = await this.buildingService.handleGetOccupancyPercentage();
         space.maxUsagePercentage = buildingInfo.occupancyPercentage;
       }
       
       if (space.customSchedule === null) {
-        const buildingHours = await this.getBuildingInfo('getOpeningHours');
+        const buildingHours = await this.buildingService.handleGetOpeningHours();
         space.customSchedule = buildingHours.openingHours;
       }
 
@@ -194,7 +183,7 @@ class SpaceService {
       console.log(`[SpaceService] Espacios encontrados: ${spaces.length}`);
 
       // Se obtiene la información del edificio para completar valores nulos
-      const buildingInfo = await this.getBuildingInfo('getBuildingInfo');
+      const buildingInfo = await this.buildingService.handleGetBuildingInfo();
       
       // Se completa la información del edificio para cada espacio si es necesario
       for (const space of spaces) {
@@ -250,12 +239,12 @@ class SpaceService {
     
       // Se completa la información del edificio para cada espacio si es necesario
       if (updatedData.maxUsagePercentage === null) {
-        const buildingInfo = await this.getBuildingInfo('getOccupancyPercentage');
+        const buildingInfo = await this.buildingService.handleGetOccupancyPercentage();
         updatedData.maxUsagePercentage = buildingInfo.occupancyPercentage;
       }
       
       if (updatedData.customSchedule === null) {
-        const buildingHours = await this.getBuildingInfo('getOpeningHours');
+        const buildingHours = await this.buildingService.handleGetOpeningHours();
         updatedData.customSchedule = buildingHours.openingHours;
       }
     
@@ -337,7 +326,7 @@ class SpaceService {
       );
 
       // Se obtiene la información del edificio para completar valores nulos
-      const buildingInfo = await this.getBuildingInfo('getBuildingInfo');
+      const buildingInfo = await this.buildingService.handleGetBuildingInfo();
       
       // Se completa la información del edificio para cada espacio
       for (const space of availableSpaces) {
@@ -373,7 +362,7 @@ class SpaceService {
       const spaces = await this.spaceRepository.findByFloor(searchData.floor);
       
       // Se obtiene la información del edificio para completar valores nulos
-      const buildingInfo = await this.getBuildingInfo('getBuildingInfo');
+      const buildingInfo = await this.buildingService.handleGetBuildingInfo();
       
       // Se completa la información del edificio para cada espacio
       for (const space of spaces) {
@@ -409,7 +398,7 @@ class SpaceService {
       const spaces = await this.spaceRepository.findByCategory(searchData.category);
       
       // Se obtiene la información del edificio para completar valores nulos
-      const buildingInfo = await this.getBuildingInfo('getBuildingInfo');
+      const buildingInfo = await this.buildingService.handleGetBuildingInfo();
       
       // Se completa la información del edificio para cada espacio
       for (const space of spaces) {
@@ -445,7 +434,7 @@ class SpaceService {
       const spaces = await this.spaceRepository.findByDepartment(searchData.department);
       
       // Se obtiene la información del edificio para completar valores nulos
-      const buildingInfo = await this.getBuildingInfo('getBuildingInfo');
+      const buildingInfo = await this.buildingService.handleGetBuildingInfo();
       
       // Se completa la información del edificio para cada espacio
       for (const space of spaces) {

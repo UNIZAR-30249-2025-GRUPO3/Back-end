@@ -10,17 +10,19 @@ const Building = require('../dominio/Building');
  */
 class BuildingService {
 
-  constructor() {
+  constructor({ initializeConsumer = true } = {}) {
     // Dependencia de infraestructura
     this.messageBroker = messageBroker;
     this.building = new Building();
-    
-    this.queueName = 'building_operations';
 
-    // Inicialización de consumidores de mensajes
-    this.setupConsumers().catch(err => {
-      console.error('Error al iniciar consumidor:', err);
-    });
+    this.queueName = 'building_operations';
+  
+    if (initializeConsumer) {
+      // Inicialización de consumidores de mensajes
+      this.setupConsumers().catch(err => {
+        console.error('Error al iniciar consumidor:', err);
+      });
+    }
   }
 
   // SERVICIO DISTRIBUIDO: Configuración para comunicación asíncrona
