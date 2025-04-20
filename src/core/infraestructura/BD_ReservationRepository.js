@@ -1,0 +1,96 @@
+const ReservationFactory = require('../dominio/ReservationFactory');
+const ReservationRepository = require('../dominio/ReservationRepository');
+
+/**
+ * BD_ReservationRepository.js
+ *
+ * IMPLEMENTACIÓN CONCRETA DEL REPOSITORIO:
+ * - Implementa la interfaz del repositorio
+ * - Pertenece a la capa de infraestructura
+ * - Se encarga de la persistencia real del agregado
+ */
+class BD_ReservationRepository extends ReservationRepository {
+
+    constructor() {
+        super();
+        this.reservations = new Map();
+        this.nextId = 1;
+    }
+
+    async findById(id) {
+        return this.reservations.get(Number(id)) || null;
+    }
+
+    async save(reservation) {
+        const id = reservation.id || this.nextId;
+
+        let newReservation;
+        if (reservation.id) {
+            newReservation = ReservationFactory.createFromData({
+                ...reservation,
+                id: reservation.id
+            });
+        } else {
+            newReservation = ReservationFactory.createFromData({
+                ...reservation,
+                id: id
+            });
+            this.nextId++;
+        }
+
+        this.reservations.set(id, newReservation);
+        return newReservation;
+    }
+
+    async update(reservation) {
+        if (!this.reservations.has(Number(reservation.id))) {
+            throw new Error('Reserva no encontrada');
+        }
+
+        const updatedReservation = ReservationFactory.createFromData(reservation);
+        this.reservations.set(Number(reservation.id), updatedReservation);
+
+        return updatedReservation;
+    }
+
+    async delete(id) {
+        return this.reservations.delete(Number(id));
+    }
+
+    async findAll(filters = {}) {
+        let reservations = [...this.reservations.values()];
+
+        if (filters.spaceId !== undefined) {
+            reservations = reservations.filter(r =>
+                r.space.some(s => s.id === filters.spaceId)
+            );
+        }
+
+        return reservations;
+    }
+
+    async findBySpaceId(spaceId) {
+        return this.findAll({ spaceId });
+    }
+
+    async findAliveReservation() {
+        const now = new Date();
+        return reservations.filter(r => new Date(r.endDate) > now);
+    }    
+
+    async findOverlappingReservations(spaceIds, startTime, duration) {
+        const endTime = new Date(startTime.getTime() + duration * 60000);
+
+        const reservations = [...this.reservations.values()];
+        return reservations.filter(r => 
+            r.space.some(s => spaceIds.includes(s.id)) &&
+            (
+                (startTime >= r.startTime && startTime < r.endTime) ||
+                (endTime > r.startTime && endTime <= r.endTime) ||
+                (startTime <= r.startTime && endTime >= r.endTime)
+            )
+        );
+    }
+}
+
+module.exports = BD_ReservationRepository;

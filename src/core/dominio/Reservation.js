@@ -1,3 +1,5 @@
+const ReservationCategory = require("./ReservationCategory");
+
 /**
  * Reservation.js
  * 
@@ -7,35 +9,38 @@
  * - Protege sus invariantes mediante validaciones internas
  */
 class Reservation {
-    constructor(id, space, usageType, maxAttendees, startTime, duration, additionalDetails, category = null) {
+    constructor(id, userId, spaceId, usageType, maxAttendees, startTime, duration, additionalDetails, category = null) {
         
         // Validaciones que mantienen la integridad del agregado
-        this.validateReservationInput(id, space, usageType, maxAttendees, startTime, duration, category);
+        this.validateReservationInput(id, userId, spaceId, usageType, maxAttendees, startTime, duration, category);
 
         // Propiedades de la entidad raíz
+
         this.id = id; // Identificador único de la entidad
-        this.space = space;
+        this.userId = userId;
+        this.space = [space];
         this.usageType = usageType;
         this.maxAttendees = maxAttendees;
         this.startTime = startTime;
         this.duration = duration;
         this.additionalDetails = additionalDetails;
         this.endTime = new Date(this.startTime.getTime() + this.duration * 60000);
-        if(category){
-            this.category = category;
-        }else{
-            // Tipo del espacio
-        }
+        this.category = new ReservationCategory(category);
+        this.status = 'valid';
     }
 
     // ASERCIÓN: Método que valida las invariantes básicas del agregado
-    validateReservationInput(id, space, usageType, maxAttendees, startTime, duration, category) {
+    validateReservationInput(id, userId, spaceId, usageType, maxAttendees, startTime, duration, category) {
 
         if (!id) {
             throw new Error("ERROR: Falta asignar un identificador");
         }
 
-        if (!space || !Array.isArray(space) || space.length === 0) {
+        if (!userId) {
+            throw new Error("ERROR: Falta asignar un identificador de usuario");
+        }
+
+        if (!spaceIds || !Array.isArray(spaceId) || spaceIds.length === 0){
             throw new Error("ERROR: Al menos un espacio debe ser seleccionado");
         }
         
