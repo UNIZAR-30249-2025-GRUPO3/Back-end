@@ -1,6 +1,7 @@
 const messageBroker = require('../infraestructura/messageBroker');
 const BD_SpaceRepository = require('../infraestructura/BD_SpaceRepository');
 const BuildingService = require('./BuildingService');
+const UserService = require('./UserService');
 const SpaceFactory = require('../dominio/SpaceFactory');
 
 /**
@@ -16,6 +17,8 @@ class SpaceService {
     // Dependencias de infraestructura
     this.spaceRepository = new BD_SpaceRepository();
     this.buildingService = new BuildingService({ initializeConsumer: false });
+    this.userService = new UserService({ initializeConsumer: false });
+
     this.messageBroker = messageBroker; // Guarda la instancia
 
     this.buildingQueueName = 'building_operations';
@@ -84,6 +87,45 @@ class SpaceService {
     }
   }
 
+  //Método para valida que los usuarios asignados al espacio tengan roles permitidos
+  async validateUserAssignment(assignmentTarget) {
+
+    // Solo se valida si el tipo de asignación es a personas
+    if (assignmentTarget.type !== 'person') {
+      return true;
+    }
+
+    const targets = assignmentTarget.targets || [];
+    
+    // Para cada ID de usuario en la asignación
+    for (const userId of targets) {
+      try {
+        // Obtener información del usuario directamente del servicio
+        const user = await this.userService.handleGetUserById({ id: userId });
+        
+        if (!user || !user.role) {
+          console.warn(`[SpaceService] Usuario no encontrado o sin rol (ID: ${userId})`);
+          return false;
+        }
+        
+        // Se verifica que el usuario tenga uno de los roles permitidos para asignación de espacios
+        const allowedRoles = ['investigador contratado', 'docente-investigador'];
+        const userRole = typeof user.role === 'string' ? user.role : 
+                        (user.role.roles ? user.role.roles[0] : null);
+        
+        if (!allowedRoles.includes(userRole)) {
+          console.warn(`[SpaceService] Rol no permitido para asignación de espacios: ${userRole}`);
+          return false;
+        }
+      } catch (error) {
+        console.error(`[ERROR] Error al validar usuario ${userId}:`, error);
+        return false;
+      }
+    }
+    
+    return true;
+  }
+
   // ================================================
   // Métodos de servicio que implementan casos de uso
   // ================================================
@@ -105,6 +147,14 @@ class SpaceService {
       if (spaceData.customSchedule === null) {
         const buildingHours = await this.buildingService.handleGetOpeningHours();
         spaceData.customSchedule = buildingHours.openingHours;
+      }
+
+      // Se valida la asignación de usuarios si el tipo es 'person'
+      if (spaceData.assignmentTarget && spaceData.assignmentTarget.type === 'person') {
+        const isValidAssignment = await this.validateUserAssignment(spaceData.assignmentTarget);
+        if (!isValidAssignment) {
+          throw new Error('La asignación de usuarios no es válida. Solo se puede asignar espacios a investigadores contratados o docentes-investigadores.');
+        }
       }
 
       // Validación del dominio mediante factoría
@@ -173,7 +223,9 @@ class SpaceService {
     }
   }
 
+  // =======================================
   // CASO DE USO: Obtener todos los espacios
+  // =======================================
   async handleGetAllSpaces(spaceData) {
 
     try {
@@ -246,6 +298,23 @@ class SpaceService {
       if (updatedData.customSchedule === null) {
         const buildingHours = await this.buildingService.handleGetOpeningHours();
         updatedData.customSchedule = buildingHours.openingHours;
+      }
+      
+      // Se valida la asignación de usuarios si se está actualizando y el tipo es 'person'
+      if (spaceData.updateFields.assignmentTarget) {
+        const assignmentTarget = spaceData.updateFields.assignmentTarget;
+        if (assignmentTarget.type === 'person') {
+          const isValidAssignment = await this.validateUserAssignment(assignmentTarget);
+          if (!isValidAssignment) {
+            throw new Error('La asignación de usuarios no es válida. Solo se puede asignar espacios a investigadores contratados o docentes-investigadores.');
+          }
+        }
+      } else if (updatedData.assignmentTarget && updatedData.assignmentTarget.type === 'person') {
+        // Si no se está actualizando la asignación pero ya existe una asignación a personas
+        const isValidAssignment = await this.validateUserAssignment(updatedData.assignmentTarget);
+        if (!isValidAssignment) {
+          throw new Error('La asignación de usuarios existente no es válida. Solo se puede asignar espacios a investigadores contratados o docentes-investigadores.');
+        }
       }
     
       // Validación del dominio mediante factoría

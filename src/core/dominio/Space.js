@@ -82,8 +82,7 @@ class Space {
             throw new Error("Si el espacio es reservable, debe tener una categoría de reserva.");
         }
 
-        // Validar coherencia entre categoría de reserva y asignación
-        // FALTA VERIFICAR LA CONSISTENCIA CON LOS ROLES DE LAS PERSONAS, PERO ESO NO SE PUEDE HACER AHÍ ****************************
+        // Validar coherencia entre categoría de reserva y asignación (la validación de los roles se hace en el servicio)
         if (this.isReservable && this.reservationCategory) {
             const category = this.reservationCategory.name;
             const assignmentType = this.assignmentTarget.getType();

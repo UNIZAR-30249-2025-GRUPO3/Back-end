@@ -11,15 +11,17 @@ const UserFactory = require('../dominio/UserFactory');
  */
 class UserService {
 
-  constructor() {
+  constructor({ initializeConsumer = true } = {})  {
     // Dependencias de infraestructura
     this.userRepository = new BD_UserRepository();
     this.messageBroker = messageBroker; // Guarda la instancia
 
-    // Inicialización de consumidores de mensajes
-    this.setupConsumers().catch(err => {
-      console.error('Error al iniciar consumidor:', err);
-    });
+    if (initializeConsumer) {
+      // Inicialización de consumidores de mensajes
+      this.setupConsumers().catch(err => {
+        console.error('Error al iniciar consumidor:', err);
+      });
+    }
   }
 
   // SERVICIO DISTRIBUIDO: Configuración para comunicación asíncrona
