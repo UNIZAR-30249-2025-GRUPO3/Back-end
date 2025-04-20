@@ -56,7 +56,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/api/users', setupUserRoutes(userController));
 app.use('/api/auth', setupAuthRoutes(authController));
 app.use('/api/building', setupBuildingRoutes(buildingController));
-app.use('/api/spaces', setupBuildingRoutes(spaceController));
+app.use('/api/spaces', setupSpaceRoutes(spaceController));
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 // catch 404 and forward to error handler

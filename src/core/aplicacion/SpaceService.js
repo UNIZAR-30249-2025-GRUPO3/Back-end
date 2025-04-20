@@ -20,8 +20,6 @@ class SpaceService {
     this.userService = new UserService({ initializeConsumer: false });
 
     this.messageBroker = messageBroker; // Guarda la instancia
-
-    this.buildingQueueName = 'building_operations';
     
     // Inicialización de consumidores de mensajes
     this.setupConsumers().catch(err => {
@@ -58,9 +56,6 @@ class SpaceService {
               break;
             case 'getAllSpaces':
               result = await this.handleGetAllSpaces(message.data);
-              break;
-            case 'findAvailableSpaces':
-              result = await this.handleFindAvailableSpaces(message.data);
               break;
             case 'findSpacesByFloor':
               result = await this.handleFindSpacesByFloor(message.data);
@@ -158,18 +153,35 @@ class SpaceService {
       }
 
       // Validación del dominio mediante factoría
-      const space = SpaceFactory.createStandardSpace(
-        null, 
-        spaceData.name,
-        spaceData.floor,
-        spaceData.capacity,
-        spaceData.spaceType,
-        spaceData.isReservable,
-        spaceData.reservationCategory,
-        spaceData.assignmentTarget,
-        spaceData.maxUsagePercentage,
-        spaceData.customSchedule
-      );
+      try {
+        SpaceFactory.createStandardSpace(
+            "temp",
+            spaceData.name,
+            spaceData.floor,
+            spaceData.capacity,
+            spaceData.spaceType,
+            spaceData.isReservable,
+            spaceData.reservationCategory,
+            spaceData.assignmentTarget,
+            spaceData.maxUsagePercentage,
+            spaceData.customSchedule
+        );
+      } catch (error) {
+            throw new Error(error.message);
+      }
+  
+      // Persistencia mediante repositorio
+      const space = {
+        name: spaceData.name,
+        floor: spaceData.floor,
+        capacity: spaceData.capacity,
+        spaceType: spaceData.spaceType,
+        isReservable: spaceData.isReservable,
+        reservationCategory: spaceData.reservationCategory,
+        assignmentTarget: spaceData.assignmentTarget,
+        maxUsagePercentage: spaceData.maxUsagePercentage,
+        customSchedule: spaceData.customSchedule
+      };
 
       // Persistencia mediante repositorio
       const savedSpace = await this.spaceRepository.save(space);
@@ -316,12 +328,16 @@ class SpaceService {
           throw new Error('La asignación de usuarios existente no es válida. Solo se puede asignar espacios a investigadores contratados o docentes-investigadores.');
         }
       }
-    
+
       // Validación del dominio mediante factoría
-      const validatedSpace = SpaceFactory.createFromData(updatedData);
-    
+      try {
+        SpaceFactory.createFromData(updatedData);
+      } catch (error) {
+        throw new Error(error.message);
+      }
+
       // Persistencia mediante repositorio
-      const updatedSpace = await this.spaceRepository.update(validatedSpace);
+      const updatedSpace = await this.spaceRepository.update(updatedData);
     
       console.log(`[SpaceService] Espacio actualizado: ${updatedSpace.name}`);
       console.log('[DEBUG] Datos finales:', {
@@ -371,48 +387,6 @@ class SpaceService {
     } catch (error) {
       console.error('[ERROR] Error al eliminar espacio:', error);
       throw new Error(`Error al eliminar espacio: ${error.message}`);
-    }
-  }
-
-  // ========================================
-  // CASO DE USO: Buscar espacios disponibles
-  // ========================================
-  async handleFindAvailableSpaces(searchData) {
-
-    if (!searchData || !searchData.dateTime || !searchData.duration) {
-      throw new Error('Se requieren fecha/hora y duración para buscar espacios disponibles');
-    }
-
-    console.log(`[SpaceService] Buscando espacios disponibles para: ${searchData.dateTime}`);
-
-    try {
-      // Se obtienen los espacios disponibles
-      const minCapacity = searchData.minCapacity || 0;
-      const availableSpaces = await this.spaceRepository.findAvailableSpaces(
-        searchData.dateTime,
-        searchData.duration,
-        minCapacity
-      );
-
-      // Se obtiene la información del edificio para completar valores nulos
-      const buildingInfo = await this.buildingService.handleGetBuildingInfo();
-      
-      // Se completa la información del edificio para cada espacio
-      for (const space of availableSpaces) {
-        if (space.maxUsagePercentage === null) {
-          space.maxUsagePercentage = buildingInfo.occupancyPercentage;
-        }
-        
-        if (space.customSchedule === null) {
-          space.customSchedule = buildingInfo.openingHours;
-        }
-      }
-
-      console.log(`[SpaceService] Espacios disponibles encontrados: ${availableSpaces.length}`);
-      return availableSpaces;
-    } catch (error) {
-      console.error('[ERROR] Error al buscar espacios disponibles:', error);
-      throw new Error(`Error al buscar espacios disponibles: ${error.message}`);
     }
   }
 

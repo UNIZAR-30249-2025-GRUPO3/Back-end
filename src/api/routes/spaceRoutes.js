@@ -223,45 +223,6 @@ function setupSpaceRoutes(spaceController) {
 
   /**
    * @swagger
-   * /api/spaces/available:
-   *   post:
-   *     summary: Buscar espacios disponibles para reserva
-   *     description: Busca espacios disponibles según fecha/hora y duración especificada.
-   *     tags: [Spaces]
-   *     requestBody:
-   *       required: true
-   *       content:
-   *         application/json:
-   *           schema:
-   *             type: object
-   *             required:
-   *               - dateTime
-   *               - duration
-   *             properties:
-   *               dateTime:
-   *                 type: string
-   *                 format: date-time
-   *                 description: Fecha y hora de inicio (ISO 8601)
-   *               duration:
-   *                 type: number
-   *                 description: Duración en minutos
-   *               minCapacity:
-   *                 type: number
-   *                 description: Capacidad mínima requerida
-   *           example:
-   *             dateTime: "2025-04-21T10:00:00Z"
-   *             duration: 120
-   *             minCapacity: 20
-   *     responses:
-   *       200:
-   *         description: Lista de espacios disponibles
-   *       400:
-   *         description: Error en la solicitud (parámetros inválidos)
-   */
-  router.post('/available', (req, res) => spaceController.findAvailableSpaces(req, res));
-
-  /**
-   * @swagger
    * /api/spaces/floor/{floor}:
    *   get:
    *     summary: Buscar espacios por planta

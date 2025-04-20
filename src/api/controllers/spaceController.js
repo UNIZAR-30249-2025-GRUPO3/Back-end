@@ -32,10 +32,6 @@ class SpaceController {
     await this.sendMessage('getAllSpaces', req.body, res);
   }
 
-  async findAvailableSpaces(req, res) {
-    await this.sendMessage('findAvailableSpaces', req.body, res);
-  }
-
   async findSpacesByFloor(req, res) {
     await this.sendMessage('findSpacesByFloor', { floor: parseInt(req.params.floor) }, res);
   }

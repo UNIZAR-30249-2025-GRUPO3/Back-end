@@ -98,19 +98,6 @@ class BD_SpaceRepository extends SpaceRepository {
         return this.findAll(criteria);
     }
 
-    async findAvailableSpaces(dateTime, duration, minCapacity) {
-
-        // AQUI CONSULTAR A LAS RESERVAS PARA VERIFICAR LAS DEMÁS COSAS NECESARIAS
-        // TMB SE DEBERA LIMITAR SEGUN FECHAS Y SU DURACION
-        
-        const availableSpaces = await this.findAll({
-            isReservable: true,
-            minCapacity: minCapacity
-        });
-        
-        return availableSpaces;
-    }
-
     async findByFloor(floor) {
         return this.findAll({ floor });
     }
