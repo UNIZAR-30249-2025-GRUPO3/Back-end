@@ -6,20 +6,24 @@ const sessions = require('client-sessions');
 
 // Repositorios
 const BD_UserRepository = require('./src/core/infraestructura/BD_UserRepository');
+const BD_SpaceRepository = require('./src/core/infraestructura/BD_SpaceRepository');
 
 // Servicios de aplicación
 const UserService = require('./src/core/aplicacion/UserService');
 const BuildingService = require('./src/core/aplicacion/BuildingService');
+const SpaceService = require('./src/core/aplicacion/SpaceService');
 
 // Controladores
 const UserController = require('./src/api/controllers/userController');
 const AuthController = require('./src/api/controllers/authController');
 const BuildingController = require('./src/api/controllers/buildingController');
+const SpaceController = require('./src/api/controllers/spaceController');
 
 // Configuración de rutas
 const setupUserRoutes = require('./src/api/routes/userRoutes');
 const setupAuthRoutes = require('./src/api/routes/authRoutes');
 const setupBuildingRoutes = require('./src/api/routes/buildingRoutes');
+const setupSpaceRoutes = require('./src/api/routes/spaceRoutes');
 
 // Swagger
 const { swaggerUi, swaggerDocs } = require("./swagger");
@@ -28,9 +32,12 @@ const { swaggerUi, swaggerDocs } = require("./swagger");
 const userRepository = new BD_UserRepository();
 const userService = new UserService();
 const buildingService = new BuildingService();
+const spaceRepository = new BD_SpaceRepository();
+const spaceService = new SpaceService();
 const userController = new UserController();
 const authController = new AuthController();
 const buildingController = new BuildingController();
+const spaceController = new SpaceController();
 
 var app = express();
 
@@ -49,6 +56,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/api/users', setupUserRoutes(userController));
 app.use('/api/auth', setupAuthRoutes(authController));
 app.use('/api/building', setupBuildingRoutes(buildingController));
+app.use('/api/spaces', setupBuildingRoutes(spaceController));
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 // catch 404 and forward to error handler
