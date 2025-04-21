@@ -45,10 +45,15 @@ describe('🔹 BuildingController', () => {
   describe('📌 getBuildingInfo', () => {
     it('Se obtiene correctamente la información del edificio', async () => {
       const mockResponse = {
-        name: 'Edificio Ada Byron',
-        address: 'C. María de Luna, 1, 50018 Zaragoza',
-        floors: 3,
-        occupancy: 75
+        id: "ada-byron",
+        name: "Edificio Ada Byron",
+        floors: 4,
+        occupancyPercentage: 100,
+        openingHours: {
+          weekdays: { open: "08:00", close: "21:00" },
+          saturday: { open: "09:00", close: "14:00" },
+          sunday: { open: null, close: null }
+        }
       };
 
       await buildingController.getBuildingInfo(req, res);
@@ -111,7 +116,7 @@ describe('🔹 BuildingController', () => {
   describe('📌 getOccupancyPercentage', () => {
     it('Se obtiene correctamente el porcentaje de ocupación', async () => {
       const mockResponse = {
-        occupancyPercentage: 75
+        occupancyPercentage: 100
       };
 
       await buildingController.getOccupancyPercentage(req, res);
@@ -154,13 +159,9 @@ describe('🔹 BuildingController', () => {
     it('Se obtienen correctamente los horarios de apertura', async () => {
       const mockResponse = {
         openingHours: {
-          monday: '8:00-21:00',
-          tuesday: '8:00-21:00',
-          wednesday: '8:00-21:00',
-          thursday: '8:00-21:00',
-          friday: '8:00-20:00',
-          saturday: '9:00-14:00',
-          sunday: 'Cerrado'
+          weekdays: { open: "08:00", close: "21:00" },
+          saturday: { open: "09:00", close: "14:00" },
+          sunday: { open: null, close: null }
         }
       };
 
@@ -203,14 +204,14 @@ describe('🔹 BuildingController', () => {
   describe('📌 updateOccupancyPercentage', () => {
     beforeEach(() => {
       req.body = {
-        percentage: 80
+        percentage: 75
       };
     });
 
     it('Se actualiza correctamente el porcentaje de ocupación', async () => {
       const mockResponse = {
-        occupancyPercentage: 80,
-        updated: true
+        success: true,
+        occupancyPercentage: 75
       };
 
       await buildingController.updateOccupancyPercentage(req, res);
@@ -218,7 +219,7 @@ describe('🔹 BuildingController', () => {
       expect(messageBroker.publish).toHaveBeenCalledWith(
         {
           operation: 'updateOccupancyPercentage',
-          data: { percentage: 80 }
+          data: { percentage: 75 }
         },
         mockUuid,
         'building_responses',
@@ -262,16 +263,22 @@ describe('🔹 BuildingController', () => {
   describe('📌 updateOpeningHours', () => {
     beforeEach(() => {
       req.body = {
-        day: 'monday',
-        hours: '9:00-22:00'
+        day: 'saturday',
+        hours: {
+          open: '10:00',
+          close: '15:00'
+        }
       };
     });
 
     it('Se actualizan correctamente los horarios de apertura', async () => {
       const mockResponse = {
-        day: 'monday',
-        hours: '9:00-22:00',
-        updated: true
+        success: true,
+        openingHours: {
+          weekdays: { open: "08:00", close: "21:00" },
+          saturday: { open: "10:00", close: "15:00" },
+          sunday: { open: null, close: null }
+        }
       };
 
       await buildingController.updateOpeningHours(req, res);
@@ -279,7 +286,13 @@ describe('🔹 BuildingController', () => {
       expect(messageBroker.publish).toHaveBeenCalledWith(
         {
           operation: 'updateOpeningHours',
-          data: { day: 'monday', hours: '9:00-22:00' }
+          data: { 
+            day: 'saturday', 
+            hours: {
+              open: '10:00',
+              close: '15:00'
+            }
+          }
         },
         mockUuid,
         'building_responses',
@@ -310,7 +323,7 @@ describe('🔹 BuildingController', () => {
     });
 
     it('Retorna error 400 cuando faltan datos para actualizar horarios', async () => {
-      req.body = { day: 'monday' };
+      req.body = { day: 'saturday' };
       
       await buildingController.updateOpeningHours(req, res);
       
@@ -320,7 +333,10 @@ describe('🔹 BuildingController', () => {
     });
 
     it('Retorna error 400 cuando faltan datos para actualizar horarios (2)', async () => {
-      req.body = { hours: '9:00-22:00' };
+      req.body = { hours: {
+        open: '10:00',
+        close: '15:00'
+      }};
       
       await buildingController.updateOpeningHours(req, res);
       
