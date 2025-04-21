@@ -79,18 +79,20 @@ class BD_ReservationRepository extends ReservationRepository {
     }    
 
     async findOverlappingReservations(spaceIds, startTime, duration) {
-        const endTime = new Date(startTime.getTime() + duration * 60000);
-
+        const start = new Date(startTime); 
+        const endTime = new Date(start.getTime() + duration * 60000);
+    
         const reservations = [...this.reservations.values()];
         return reservations.filter(r => 
             r.space.some(s => spaceIds.includes(s.id)) &&
             (
-                (startTime >= r.startTime && startTime < r.endTime) ||
-                (endTime > r.startTime && endTime <= r.endTime) ||
-                (startTime <= r.startTime && endTime >= r.endTime)
+                (start >= new Date(r.startTime) && start < new Date(r.endTime)) ||
+                (endTime > new Date(r.startTime) && endTime <= new Date(r.endTime)) ||
+                (start <= new Date(r.startTime) && endTime >= new Date(r.endTime))
             )
         );
     }
+    
 }
 
 module.exports = BD_ReservationRepository;

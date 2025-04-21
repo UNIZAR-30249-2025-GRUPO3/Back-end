@@ -11,6 +11,8 @@ class MessageBroker {
     this.responseQueueB = 'building_responses'; // Cola para respuestas para edificios
     this.requestQueueC = 'space_operations'; // Cola de solicitudes para espacios
     this.responseQueueC = 'space_responses'; // Cola para respuestas para espacios
+    this.requestQueueD = 'reservation_operations'; // Cola de solicitudes para espacios
+    this.responseQueueD = 'reservation_responses'; // Cola para respuestas para espacios
     this.amqpUrl = 'amqps://xvrhrdqc:WoZh4rUov7sSoTNqbRssm1YbgRpc647a@kebnekaise.lmq.cloudamqp.com/xvrhrdqc';
     this.consumerTags = {};
   }
@@ -24,6 +26,8 @@ class MessageBroker {
     await this.channel.assertQueue(this.responseQueueB, { durable: true }); 
     await this.channel.assertQueue(this.requestQueueC, { durable: true });
     await this.channel.assertQueue(this.responseQueueC, { durable: true }); 
+    await this.channel.assertQueue(this.requestQueueD, { durable: true });
+    await this.channel.assertQueue(this.responseQueueD, { durable: true }); 
     console.log('[RabbitMQ] Conectado a CloudAMQP');
   }
 
