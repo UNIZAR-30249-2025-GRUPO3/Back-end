@@ -9,28 +9,29 @@ const ReservationCategory = require("./ReservationCategory");
  * - Protege sus invariantes mediante validaciones internas
  */
 class Reservation {
-    constructor(id, userId, spaceId, usageType, maxAttendees, startTime, duration, additionalDetails, category = null) {
+    constructor(id, userId, spaceIds, usageType, maxAttendees, startTime, duration, additionalDetails, category = null) {
         
         // Validaciones que mantienen la integridad del agregado
-        this.validateReservationInput(id, userId, spaceId, usageType, maxAttendees, startTime, duration, category);
+        this.validateReservationInput(id, userId, spaceIds, usageType, maxAttendees, startTime, duration);
 
         // Propiedades de la entidad raíz
 
         this.id = id; // Identificador único de la entidad
         this.userId = userId;
-        this.space = [space];
+        this.spaceIds = [spaceIds];
         this.usageType = usageType;
         this.maxAttendees = maxAttendees;
-        this.startTime = startTime;
+        this.startTime = new Date(startTime);
         this.duration = duration;
         this.additionalDetails = additionalDetails;
         this.endTime = new Date(this.startTime.getTime() + this.duration * 60000);
+        console.log("Categoría recibida:", category, typeof category);
         this.category = new ReservationCategory(category);
         this.status = 'valid';
     }
 
     // ASERCIÓN: Método que valida las invariantes básicas del agregado
-    validateReservationInput(id, userId, spaceId, usageType, maxAttendees, startTime, duration, category) {
+    validateReservationInput(id, userId, spaceIds, usageType, maxAttendees, startTime, duration) {
 
         if (!id) {
             throw new Error("ERROR: Falta asignar un identificador");
@@ -40,7 +41,7 @@ class Reservation {
             throw new Error("ERROR: Falta asignar un identificador de usuario");
         }
 
-        if (!spaceIds || !Array.isArray(spaceId) || spaceIds.length === 0){
+        if (!spaceIds || !Array.isArray(spaceIds) || spaceIds.length === 0){
             throw new Error("ERROR: Al menos un espacio debe ser seleccionado");
         }
         
@@ -53,17 +54,13 @@ class Reservation {
             throw new Error("ERROR: El número de asistentes máximos debe ser un número entero positivo");
         }
     
-        if (!startTime || !(startTime instanceof Date) || isNaN(startTime.getTime())) {
-            throw new Error("ERROR: Fecha de inicio inexistente o inválida.");
+        const start = new Date(startTime);
+        if (!startTime || isNaN(start.getTime())) {
+          throw new Error("ERROR: Fecha de inicio inexistente o inválida.");
         }
     
         if (!duration || isNaN(duration) || duration <= 0) {
             throw new Error("ERROR: La duración debe ser un número entero positivo (en minutos).");
-        }
-
-        const allowedUsagecategories = ['aula', 'seminario', 'laboratorio', 'despacho', 'sala comun'];
-        if (!category || !allowedUsagecategories.includes(category)) {
-            throw new Error("ERROR: Categoría de reserva inválida.");
         }
       }
 

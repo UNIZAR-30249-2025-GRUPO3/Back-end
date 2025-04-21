@@ -45,6 +45,9 @@ class ReservationService {
             case 'createReservation':
               result = await this.handleCreateReservation(message.data);
               break;
+            case 'getAllReservation':
+              result = await this.handlegetAllReservation();
+              break;
             case 'getReservationById':
               result = await this.handleGetReservationById(message.data);
               break;
@@ -88,7 +91,7 @@ class ReservationService {
     if (!user) throw new Error('Usuario no encontrado');
 
     // Obtener información del espacio
-    const space = await this.spaceService.handleGetSpaceById({ id: spaceId });
+    const space = await this.spaceService.handleGetSpaceById({ id: spaceId});
     if (!space) throw new Error('Espacio no encontrado');
     if (!space.isReservable) throw new Error('El espacio no es reservable');
 
@@ -141,7 +144,7 @@ class ReservationService {
     try{
         await this.validateUserCanReserveSpace(
             Reservationdata.userId,
-            Reservationdata.spaceId,
+            Reservationdata.spaceIds[0],
             Reservationdata.category,
             Reservationdata.maxAttendees,
             Reservationdata.startTime,
@@ -159,15 +162,14 @@ class ReservationService {
 
         // Validación de dominio y creación del objeto
         const reservation = ReservationFactory.createStandardReservation(
-          null,
+          1,
           Reservationdata.userId,
-          Reservationdata.spaceId,
+          Reservationdata.spaceIds,
           Reservationdata.usageType,
           Reservationdata.maxAttendees,
           Reservationdata.startTime,
           Reservationdata.duration,
           Reservationdata.additionalDetails,
-          Reservationdata.endTime,
           Reservationdata.category
         );
       
@@ -179,6 +181,18 @@ class ReservationService {
         console.error('[ERROR] Error al crear reserva:', error);
         throw new Error(`Error al crear reserva: ${error.message}`);
     }
+  }
+
+
+  // =====================================
+  // CASO DE USO: Obtener todas las reservas
+  // =====================================
+  async handlegetAllReservation(Reservationdata) {
+
+    const reservation = await this.reservationRepository.findAll();
+    if (!reservation) throw new Error('Reserva no encontrada');
+
+    return reservation;
   }
 
   // =====================================
@@ -204,7 +218,7 @@ class ReservationService {
     
     reservation.status = 'deleted';
     
-    const updated = await this.reservationRepository.update(reservation.id, reservation);
+    const updated = await this.reservationRepository.delete(reservation.id);
     return updated;
   }
 
