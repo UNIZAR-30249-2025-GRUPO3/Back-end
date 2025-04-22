@@ -200,7 +200,7 @@ function setupReservationRoutes(reservationController) {
    */
     router.get('/user/:userId', isAuthenticated, (req, res) => reservationController.getReservationsByUser(req, res));
 
-      /**
+    /**
    * @swagger
    * /api/reservations/{id}:
    *   put:
@@ -242,6 +242,35 @@ function setupReservationRoutes(reservationController) {
    *         description: Reserva no encontrada
    */
   router.put('/:id', isAuthenticated, (req, res) => reservationController.validateReservation(req, res));
+
+    /**
+   * @swagger
+   * /api/reservations/invalidate/{id}:
+   *   put:
+   *     summary: Invalidar una reserva existente
+   *     tags: [Reservations]
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: string
+   *         description: ID de la reserva a invalidar
+   *     responses:
+   *       200:
+   *         description: Reserva invalidada exitosamente
+   *       400:
+   *         description: Datos inválidos
+   *       401:
+   *         description: No autenticado
+   *       403:
+   *         description: No autorizado para invalidar esta reserva
+   *       404:
+   *         description: Reserva no encontrada
+   */
+  router.put('/invalidate/:id', isAuthenticated, (req, res) => reservationController.invalidateReservation(req, res));
 
 
   return router;

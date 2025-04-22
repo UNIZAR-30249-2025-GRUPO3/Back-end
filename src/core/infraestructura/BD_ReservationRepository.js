@@ -42,18 +42,30 @@ class BD_ReservationRepository extends ReservationRepository {
         return newReservation;
     }
 
-    async update(id, reservation) {
-        if (!this.reservations.has(Number(id))) {
-            throw new Error('Reserva no encontrada');
+    async update(id, partialData) {
+        const numericId = Number(id);
+      
+        if (!this.reservations.has(numericId)) {
+          throw new Error('Reserva no encontrada');
         }
+        console.log('[DEBUG]Partial:\n', JSON.stringify(partialData, null, 2));
+        
+        const existingReservation = this.reservations.get(numericId);
+      
+        // Mezclamos cuidadosamente solo los campos que queremos actualizar
         const updatedReservation = ReservationFactory.createFromData({
-            ...reservation,
-            id: Number(id)
+          ...existingReservation,
+          ...partialData,
+          id: numericId  // nos aseguramos que el id no se pierda
         });
-    
-        this.reservations.set(Number(id), updatedReservation);
+      
+        console.log('[DEBUG] updated:\n', JSON.stringify(updatedReservation, null, 2));
+
+        this.reservations.set(numericId, updatedReservation);
         return updatedReservation;
-    }
+      }
+      
+
     
 
     async delete(id) {

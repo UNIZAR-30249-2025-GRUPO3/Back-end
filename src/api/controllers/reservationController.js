@@ -31,7 +31,7 @@ class ReservationController {
   async invalidateReservation(req, res) {
     await this.sendMessage('invalidReservation', { id: req.params.id }, res);
   }
-
+  
   async getReservationsByUser(req, res) {
     await this.sendMessage('getReservationsByUser', { userId: req.params.userId }, res);
   }

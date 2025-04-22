@@ -233,10 +233,6 @@ class ReservationService {
     const exists = await this.reservationRepository.findById(Reservationdata.id);
     if (!exists) throw new Error('Reserva no encontrada');
   
-    console.log("[DEBUG PUT] Reservationdata:", Reservationdata);
-console.log("[DEBUG PUT] Reservationdata.spaceIds:", Reservationdata.spaceIds);
-console.log("[DEBUG PUT] Array.isArray:", Array.isArray(Reservationdata.spaceIds));
-
     await this.validateUserCanReserveSpace(
       Reservationdata.userId,
       Reservationdata.spaceIds[0],
@@ -263,12 +259,13 @@ console.log("[DEBUG PUT] Array.isArray:", Array.isArray(Reservationdata.spaceIds
 
     const reservation = await this.reservationRepository.findById(Reservationdata.id);
     if (!reservation) throw new Error('Reserva no encontrada');
-
-    reservation.status = 'potentially_invalid';
-
-    const updated = await this.reservationRepository.update(reservation.id, reservation);
+  
+    // Solo pasar el campo que queremos actualizar
+    const updateData = { status: 'potentially_invalid' };
+    
+    const updated = await this.reservationRepository.update(Reservationdata.id, updateData);
     return updated;
-  }
+}
 
   // ===============================================
   // CASO DE USO: Obtener reservas de un usuario

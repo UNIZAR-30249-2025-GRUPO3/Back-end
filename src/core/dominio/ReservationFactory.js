@@ -25,7 +25,8 @@ class ReservationFactory {
             ReservationData.startTime,
             ReservationData.duration,
             ReservationData.additionalDetails,
-            ReservationData.category
+            ReservationData.category,
+            ReservationData.status
         );
     }
 }
