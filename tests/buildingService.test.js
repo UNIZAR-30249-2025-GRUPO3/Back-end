@@ -3,27 +3,12 @@ const messageBroker = require('../src/core/infraestructura/messageBroker');
 const Building = require('../src/core/dominio/Building');
 
 jest.mock('../src/core/infraestructura/messageBroker');
-jest.mock('../src/core/dominio/Building');
 
 describe('🔹 BuildingService', () => {
     let buildingService;
     
     beforeEach(() => {
         jest.clearAllMocks();
-        
-        Building.mockImplementation(() => {
-            return {
-                id: 'ada-byron',
-                name: 'Edificio Ada Byron',
-                floors: 4,
-                _maxOccupancyPercentage: 100,
-                _openingHours: {
-                    weekdays: { open: '08:00', close: '21:00' },
-                    saturday: { open: '09:00', close: '14:00' },
-                    sunday: { open: null, close: null }
-                }
-            };
-        });
         
         buildingService = new BuildingService({ initializeConsumer: false });
         
