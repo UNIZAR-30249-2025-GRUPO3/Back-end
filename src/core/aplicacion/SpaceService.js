@@ -82,7 +82,7 @@ class SpaceService {
     }
   }
 
-  //Método para valida que los usuarios asignados al espacio tengan roles permitidos
+  //Método para validar que los usuarios asignados al espacio tengan roles permitidos
   async validateUserAssignment(assignmentTarget) {
 
     // Solo se valida si el tipo de asignación es a personas
@@ -91,8 +91,10 @@ class SpaceService {
     }
 
     const targets = assignmentTarget.targets || [];
-    
-    // Para cada ID de usuario en la asignación
+
+    // Lista de roles permitidos
+    const allowedRoles = ['investigador contratado', 'docente-investigador'];
+
     for (const userId of targets) {
       try {
         // Obtener información del usuario directamente del servicio
@@ -104,12 +106,21 @@ class SpaceService {
         }
         
         // Se verifica que el usuario tenga uno de los roles permitidos para asignación de espacios
-        const allowedRoles = ['investigador contratado', 'docente-investigador'];
-        const userRole = typeof user.role === 'string' ? user.role : 
-                        (user.role.roles ? user.role.roles[0] : null);
-        
-        if (!allowedRoles.includes(userRole)) {
-          console.warn(`[SpaceService] Rol no permitido para asignación de espacios: ${userRole}`);
+        let userRoles = [];
+
+        if (typeof user.role === 'string') {
+          userRoles = [user.role];
+        } else if (Array.isArray(user.role)) {
+          userRoles = user.role;
+        } else if (user.role.roles && Array.isArray(user.role.roles)) {
+          userRoles = user.role.roles;
+        }
+
+        // Verificamos si al menos uno de los roles está permitido
+        const hasAllowedRole = userRoles.some(role => allowedRoles.includes(role));
+
+        if (!hasAllowedRole) {
+          console.warn(`[SpaceService] Ningún rol permitido para el usuario ${userId}. Roles: ${userRoles.join(', ')}`);
           return false;
         }
       } catch (error) {

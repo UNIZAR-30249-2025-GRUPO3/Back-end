@@ -83,7 +83,7 @@ class Space {
         }
 
         // Validar coherencia entre categoría de reserva y asignación (la validación de los roles se hace en el servicio)
-        if (this.isReservable && this.reservationCategory) {
+        if (this.reservationCategory) {
             const category = this.reservationCategory.name;
             const assignmentType = this.assignmentTarget.getType();
 
