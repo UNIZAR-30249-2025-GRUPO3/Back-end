@@ -84,7 +84,7 @@ class ReservationService {
 
 
   // Función para validar las reglas de la reserva
-  async validateUserCanReserveSpace(userId, spaceId, reservationCategory, maxAttendees, startTime, endTime) {
+  async validateUserCanReserveSpace(userId, spaceId, reservationCategory, maxAttendees, startTime, duration) {
       
     // Obtener información del usuario
     const user = await this.userService.handleGetUserById({ id: userId });
@@ -126,7 +126,7 @@ class ReservationService {
     }
 
     // Verificar disponibilidad del espacio
-    const overlappingReservations = await this.reservationRepository.findOverlappingReservations(spaceId, startTime, endTime);
+    const overlappingReservations = await this.reservationRepository.findOverlappingReservations(spaceId, startTime, duration);
     if (overlappingReservations.length > 0) {
         throw new Error('El espacio ya está reservado en el periodo de tiempo solicitado');
     }
@@ -148,7 +148,7 @@ class ReservationService {
             Reservationdata.category,
             Reservationdata.maxAttendees,
             Reservationdata.startTime,
-            Reservationdata.endTime
+            Reservationdata.duration
           );
         
         // Obtener categoría del espacio si es nula
@@ -226,29 +226,34 @@ class ReservationService {
   // CASO DE USO: Validar o actualizar una reserva inválida
   // =====================================================
   async handleValidateReservation(Reservationdata) {
+    try{
+
     if (!Reservationdata?.id) throw new Error('El campo "id" es requerido');
+
+    const exists = await this.reservationRepository.findById(Reservationdata.id);
+    if (!exists) throw new Error('Reserva no encontrada');
   
-    const reservation = await this.reservationRepository.findById(Reservationdata.id);
-    if (!reservation) throw new Error('Reserva no encontrada');
-  
-    // Validar nuevamente con los datos actuales
+    console.log("[DEBUG PUT] Reservationdata:", Reservationdata);
+console.log("[DEBUG PUT] Reservationdata.spaceIds:", Reservationdata.spaceIds);
+console.log("[DEBUG PUT] Array.isArray:", Array.isArray(Reservationdata.spaceIds));
+
     await this.validateUserCanReserveSpace(
-      reservation.userId,
-      reservation.spaceId,
-      reservation.category,
-      reservation.maxAttendees,
-      reservation.startTime,
-      reservation.endTime
+      Reservationdata.userId,
+      Reservationdata.spaceIds[0],
+      Reservationdata.category,
+      Reservationdata.maxAttendees,
+      Reservationdata.startTime,
+      Reservationdata.duration
     );
-  
-    // Si la validación es exitosa, actualizar estado
-    reservation.status = 'valid';
-  
-    const updated = await this.reservationRepository.update(reservation.id, reservation);
+
+    Reservationdata.status = 'valid';
+    const updated = await this.reservationRepository.update(Reservationdata.id, Reservationdata);
     return updated;
+  } catch (error) {
+    console.error('[ERROR] Error al validar reserva:', error);
+    throw new Error(`Error al validar reserva: ${error.message}`);
   }
-  
-  
+}
 
   // ===================================
   // CASO DE USO: Invalidar una reserva

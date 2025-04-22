@@ -25,7 +25,7 @@ class ReservationController {
   }
 
   async validateReservation(req, res) {
-    await this.sendMessage('validateReservation', { id: req.params.id }, res);
+    await this.sendMessage('validateReservation', { ...req.body, id: req.params.id }, res);
   }
 
   async invalidateReservation(req, res) {

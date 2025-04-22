@@ -175,6 +175,75 @@ function setupReservationRoutes(reservationController) {
    */
   router.delete('/:id', isAuthenticated, (req, res) => reservationController.deleteReservation(req, res));
 
+    /**
+   * @swagger
+   * /api/reservations/user/{userId}:
+   *   get:
+   *     summary: Obtener todas las reservas de un usuario
+   *     tags: [Reservations]
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: userId
+   *         required: true
+   *         schema:
+   *           type: string
+   *         description: ID del usuario
+   *     responses:
+   *       200:
+   *         description: Reservas del usuario obtenidas correctamente
+   *       401:
+   *         description: No autenticado
+   *       404:
+   *         description: Usuario no encontrado o sin reservas
+   */
+    router.get('/user/:userId', isAuthenticated, (req, res) => reservationController.getReservationsByUser(req, res));
+
+      /**
+   * @swagger
+   * /api/reservations/{id}:
+   *   put:
+   *     summary: Actualizar una reserva existente
+   *     tags: [Reservations]
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: string
+   *         description: ID de la reserva a actualizar
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             $ref: '#/components/schemas/Reservation'
+   *           example:
+   *             userId: 2
+   *             spaceIds: [1]
+   *             usageType: "gestion"
+   *             maxAttendees: 10
+   *             startTime: "2025-04-21T14:00:00Z"
+   *             duration: 90
+   *             category: "sala común"
+   *     responses:
+   *       200:
+   *         description: Reserva actualizada exitosamente
+   *       400:
+   *         description: Datos inválidos
+   *       401:
+   *         description: No autenticado
+   *       403:
+   *         description: No autorizado para actualizar esta reserva
+   *       404:
+   *         description: Reserva no encontrada
+   */
+  router.put('/:id', isAuthenticated, (req, res) => reservationController.validateReservation(req, res));
+
+
   return router;
 }
 

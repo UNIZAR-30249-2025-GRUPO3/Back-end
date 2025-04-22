@@ -42,16 +42,19 @@ class BD_ReservationRepository extends ReservationRepository {
         return newReservation;
     }
 
-    async update(reservation) {
-        if (!this.reservations.has(Number(reservation.id))) {
+    async update(id, reservation) {
+        if (!this.reservations.has(Number(id))) {
             throw new Error('Reserva no encontrada');
         }
-
-        const updatedReservation = ReservationFactory.createFromData(reservation);
-        this.reservations.set(Number(reservation.id), updatedReservation);
-
+        const updatedReservation = ReservationFactory.createFromData({
+            ...reservation,
+            id: Number(id)
+        });
+    
+        this.reservations.set(Number(id), updatedReservation);
         return updatedReservation;
     }
+    
 
     async delete(id) {
         return this.reservations.delete(Number(id));
@@ -73,6 +76,11 @@ class BD_ReservationRepository extends ReservationRepository {
         return this.findAll({ spaceId });
     }
 
+    async findByUserId(userId) {
+        const reservations = [...this.reservations.values()];
+        return reservations.filter(r => String(r.userId) === String(userId));
+    }
+
     async findAliveReservation() {
         const now = new Date();
         return reservations.filter(r => new Date(r.endDate) > now);
@@ -82,9 +90,13 @@ class BD_ReservationRepository extends ReservationRepository {
         const start = new Date(startTime); 
         const endTime = new Date(start.getTime() + duration * 60000);
     
+        const normalizedSpaceIds = Array.isArray(spaceIds)
+            ? spaceIds.flat(Infinity).map(s => (typeof s === 'object' && s !== null ? s.id : s))
+            : [typeof spaceIds === 'object' && spaceIds !== null ? spaceIds.id : spaceIds];
+    
         const reservations = [...this.reservations.values()];
         return reservations.filter(r => 
-            r.space.some(s => spaceIds.includes(s.id)) &&
+            r.spaceIds.some(s => normalizedSpaceIds.includes(s.id)) &&
             (
                 (start >= new Date(r.startTime) && start < new Date(r.endTime)) ||
                 (endTime > new Date(r.startTime) && endTime <= new Date(r.endTime)) ||
@@ -92,6 +104,7 @@ class BD_ReservationRepository extends ReservationRepository {
             )
         );
     }
+    
     
 }
 

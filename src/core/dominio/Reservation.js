@@ -18,7 +18,7 @@ class Reservation {
 
         this.id = id; // Identificador único de la entidad
         this.userId = userId;
-        this.spaceIds = [spaceIds];
+        this.spaceIds = spaceIds;
         this.usageType = usageType;
         this.maxAttendees = maxAttendees;
         this.startTime = new Date(startTime);
