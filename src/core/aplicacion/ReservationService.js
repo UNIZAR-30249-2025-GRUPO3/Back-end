@@ -103,13 +103,20 @@ class ReservationService {
     } else if (user.role === "técnico de laboratorio") {
         if (reservationCategory ===  "aula") {
             throw new Error('Los técnicos de laboratorio no pueden reservar aulas');
-        }
-    } else if (["técnico de laboratorio", "investigador contratado", "docente-investigador"].includes(user.role)) { 
-        if (reservationCategory !== "laboratorio" || space.assignmentTarget.type !== "department" 
-            || space.assignmentTarget.target !== user.department) {
+        }else if (reservationCategory === "laboratorio"){
+          if (space.assignmentTarget.type !== "department" || 
+            !space.assignmentTarget.targets.includes(user.department)) {
             throw new Error('El rol no puede reservar este tipo de espacio o no pertenece a su departamento');
         }
-    }
+        }
+    } else if (["investigador contratado", "docente-investigador"].includes(user.role)) { 
+      if (reservationCategory === "laboratorio") {
+          if (space.assignmentTarget.type !== "department" || 
+              !space.assignmentTarget.targets.includes(user.department)) {
+              throw new Error('El rol no puede reservar este tipo de espacio o no pertenece a su departamento');
+          }
+      }
+  }
 
     // Verificar que la categoría de reserva no sea despacho
     if (reservationCategory === "despacho" && space.category === 'despacho') {
@@ -228,10 +235,10 @@ class ReservationService {
   async handleValidateReservation(Reservationdata) {
     try{
 
-    if (!Reservationdata?.id) throw new Error('El campo "id" es requerido');
+      if (!Reservationdata?.id) throw new Error('El campo "id" es requerido');
 
-    const exists = await this.reservationRepository.findById(Reservationdata.id);
-    if (!exists) throw new Error('Reserva no encontrada');
+    const reservation = await this.reservationRepository.findById(Reservationdata.id);
+    if (!reservation) throw new Error('Reserva no encontrada');
   
     await this.validateUserCanReserveSpace(
       Reservationdata.userId,

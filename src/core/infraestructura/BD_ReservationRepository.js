@@ -52,11 +52,10 @@ class BD_ReservationRepository extends ReservationRepository {
         
         const existingReservation = this.reservations.get(numericId);
       
-        // Mezclamos cuidadosamente solo los campos que queremos actualizar
         const updatedReservation = ReservationFactory.createFromData({
           ...existingReservation,
           ...partialData,
-          id: numericId  // nos aseguramos que el id no se pierda
+          id: numericId 
         });
       
         console.log('[DEBUG] updated:\n', JSON.stringify(updatedReservation, null, 2));
