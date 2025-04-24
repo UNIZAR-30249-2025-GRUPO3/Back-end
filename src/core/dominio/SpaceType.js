@@ -10,7 +10,7 @@ class SpaceType {
     constructor(name) {
         // Validaciones que mantienen la integridad del objeto valor
         const validTypes = [
-            "aula", "seminario", "laboratorio", "despacho", "sala común"
+            "aula", "seminario", "laboratorio", "despacho", "sala común", "otro"
         ];
 
         // ASERCIONES: Validaciones que garantizan la integridad del valor

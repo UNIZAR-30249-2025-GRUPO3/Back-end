@@ -1,5 +1,6 @@
 const SpaceRepository = require('../dominio/SpaceRepository');
 const SpaceFactory = require('../dominio/SpaceFactory');
+const pool = require('../infraestructura/db');
 
 /**
  * BD_SpaceRepository.js
@@ -10,112 +11,193 @@ const SpaceFactory = require('../dominio/SpaceFactory');
  * - Se encarga de la persistencia real del agregado
  */
 class BD_SpaceRepository extends SpaceRepository {
-
+    
     // DE MOMENTO LA PERSISTENCIA SE HACE EN MEMORIA PARA PRUEBAS - LUEGO PASAR A BD
 
-    constructor() {
-        super();
-        this.spaces = new Map();
-        this.nextId = 1;
-    }
-    
     async findById(id) {
-        return this.spaces.get(Number(id)) || null;
-    }
-    
-    async save(space) {
-        const id = space.id || this.nextId;
-        
-        let newSpace;
-        if (space.id) {
-            // Si ya tiene ID, se usa ese ID
-            newSpace = SpaceFactory.createFromData({
-                ...space,
-                id: space.id
-            });
-        } else {
-            // Si no tiene ID, se genera uno nuevo
-            newSpace = SpaceFactory.createFromData({
-                ...space,
-                id: id
-            });
-            this.nextId++;
+        const res = await pool.query('SELECT id, nombre as name, floor, capacity, "spaceType", is_reservable as isReservable, reservation_category as reservationCategory, assignment_type as "assignmentType", assignment_targets as "assignmentTargets", max_usage_percentage as maxUsagePercentage FROM spaces WHERE id = $1', [id]);
+        if (res.rows.length === 0) return null;
+        const row = res.rows[0];
+        if (!row) {
+          return null;
         }
+        const assignmentTarget = {
+          type: row.assignmentType,
+          targets: row.assignmentTargets
+        };
+        return SpaceFactory.createFromData({
+          ...row,
+          assignmentTarget: assignmentTarget
+        });
         
-        this.spaces.set(id, newSpace);
-        return newSpace;
-    }
+      }
     
-    async update(space) {
-        if (!this.spaces.has(Number(space.id))) {
-          throw new Error('Espacio no encontrado');
+      async save(space) {
+        const res = await pool.query(`
+          INSERT INTO spaces (nombre, floor, capacity, is_reservable, max_usage_percentage, assignment_type, assignment_targets, reservation_category, "spaceType")
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+          RETURNING *;
+        `, [
+          space.name, 
+          space.floor,
+          space.capacity,
+          space.isReservable,
+          space.maxUsagePercentage,
+          space.assignmentTarget.type || null, 
+          space.assignmentTarget.targets || null, 
+          space.reservationCategory || null,
+          space.spaceType || 'otro',
+        ]);
+      
+        const row = res.rows[0];
+        if (!row) {
+            throw new Error('Espacio no guardado');
         }
+        const assignmentTarget = {
+          type: row.assignment_type,
+          targets: row.assignment_targets
+        };
+        return SpaceFactory.createFromData({
+          ...row,
+          name: space.name,
+          assignmentTarget: assignmentTarget
+ 
+        });
+      }
+      
+    
+      async update(space) {
+        const res = await pool.query(`
+          UPDATE spaces
+          SET nombre = $1,
+              floor = $2,
+              capacity = $3,
+              is_reservable = $4,
+              max_usage_percentage = $5,
+              assignment_type = $6,
+              assignment_targets = $7,
+              reservation_category = $8,
+              "spaceType" = $9
+          WHERE id = $10
+          RETURNING *;
+        `, [
+          space.name,
+          space.floor,
+          space.capacity,
+          space.isReservable,
+          space.max_usage_percentage,
+          space.assignmentTarget.type || null, 
+          space.assignmentTarget.targets || null, 
+          space.reservationCategory || null,
+          space.spaceType || 'otro',
+          space.id,
+        ]);
+        const row = res.rows[0];
+        if (!row) {
+            throw new Error('Espacio no encontrado');
+        }
+        const assignmentTarget = {
+          type: row.assignment_type,
+          targets: row.assignment_targets
+        };
+        return SpaceFactory.createFromData({
+          ...row,
+          name: space.name,
+          assignmentTarget: assignmentTarget
+ 
+        });
+      }
+    
+      async delete(id) {
+        await pool.query('DELETE FROM spaces WHERE id = $1', [id]);
+      }
+    
+      async findAll(filters = {}) {
+        let query = 'SELECT id, nombre as name, floor, capacity, "spaceType", is_reservable as isReservable, reservation_category as reservationCategory, assignment_type as "assignmentType", assignment_targets as "assignmentTargets", max_usage_percentage as maxUsagePercentage FROM spaces';
+        const conditions = [];
+        const values = [];
 
-        const updatedSpace = SpaceFactory.createFromData(space);
-        this.spaces.set(Number(space.id), updatedSpace);
-        
-        return updatedSpace;
-    }
-    
-    async delete(id) {
-        return this.spaces.delete(Number(id));
-    }
-    
-    async findAll(filters = {}) {
-        let spaces = [...this.spaces.values()];
-        
-        // Se aplican filtros si hay
         if (filters.floor !== undefined) {
-            spaces = spaces.filter(space => space.floor === filters.floor);
+          values.push(filters.floor);
+          conditions.push(`floor = $${values.length}`);
         }
-        
-        if (filters.isReservable !== undefined) {
-            spaces = spaces.filter(space => space.isReservable === filters.isReservable);
+    
+        if (filters.is_reservable !== undefined) {
+          values.push(filters.is_reservable);
+          conditions.push(`is_reservable = $${values.length}`);
         }
-        
-        if (filters.category) {
-            spaces = spaces.filter(space => 
-                space.reservationCategory && space.reservationCategory.name === filters.category
-            );
+    
+        if (conditions.length > 0) {
+          query += ' WHERE ' + conditions.join(' AND ');
         }
-        
-        if (filters.minCapacity) {
-            spaces = spaces.filter(space => 
-                space.getCurrentCapacity() >= filters.minCapacity
-            );
-        }
-        
-        if (filters.spaceType) {
-            spaces = spaces.filter(space => 
-                space.spaceType.name === filters.spaceType
-            );
-        }
-        
-        return spaces;
-    }
+    
+        query += ' ORDER BY id ASC';
 
-    async findByFilters(criteria) {
-        return this.findAll(criteria);
-    }
+        const res = await pool.query(query, values);
+
+        return res.rows.map(row => {
+            const assignmentTarget = {
+                type: row.assignmentType,
+                targets: row.assignmentTargets
+            };
+        
+            return SpaceFactory.createFromData({
+                ...row,
+                assignmentTarget: assignmentTarget
+            });
+        });
+      }
+
+    async findByFilters(filters) {
+        return this.findAll(filters);
+    }      
 
     async findByFloor(floor) {
-        return this.findAll({ floor });
-    }
+        const res = await pool.query('SELECT id, nombre as name, floor, capacity, "spaceType", is_reservable as isReservable, reservation_category as reservationCategory, assignment_type as "assignmentType", assignment_targets as "assignmentTargets", max_usage_percentage as maxUsagePercentage FROM spaces WHERE floor = $1 ORDER BY id ASC', [floor]);
+        return res.rows.map(row => {
+            const assignmentTarget = {
+                type: row.assignmentType,
+                targets: row.assignmentTargets
+            };
+        
+            return SpaceFactory.createFromData({
+                ...row,
+                assignmentTarget: assignmentTarget
+            });
+        });
+    } 
 
     async findByCategory(category) {
-        return this.findAll({ category });
-    }
-
-    async findByDepartment(department) {
-        const spaces = [...this.spaces.values()];
+        const res = await pool.query('SELECT id, nombre as name, floor, capacity, "spaceType", is_reservable as isReservable, reservation_category as reservationCategory, assignment_type as "assignmentType", assignment_targets as "assignmentTargets", max_usage_percentage as maxUsagePercentage FROM spaces WHERE reservation_category = $1 ORDER BY id ASC', [category]);
+        return res.rows.map(row => {
+            const assignmentTarget = {
+                type: row.assignmentType,
+                targets: row.assignmentTargets
+            };
         
-        return spaces.filter(space => {
-            if (space.assignmentTarget && space.assignmentTarget.getType() === 'department') {
-                return space.assignmentTarget.getTargets().includes(department);
-            }
-            return false;
+            return SpaceFactory.createFromData({
+                ...row,
+                assignmentTarget: assignmentTarget
+            });
         });
     }
+    
+
+    async findByDepartment(department) {
+        const res = await pool.query(`SELECT id, nombre as name, floor, capacity, "spaceType", is_reservable as isReservable, reservation_category as reservationCategory, assignment_type as "assignmentType", assignment_targets as "assignmentTargets", max_usage_percentage as maxUsagePercentage FROM spaces WHERE assignment_type = 'department' AND assignment_targets @> ARRAY[$1] ORDER BY id ASC`, [department]);
+        return res.rows.map(row => {
+            const assignmentTarget = {
+                type: row.assignmentType,
+                targets: row.assignmentTargets
+            };
+        
+            return SpaceFactory.createFromData({
+                ...row,
+                assignmentTarget: assignmentTarget
+            });
+        });
+    }
+    
 }
 
 module.exports = BD_SpaceRepository;
