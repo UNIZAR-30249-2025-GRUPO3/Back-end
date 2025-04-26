@@ -54,12 +54,6 @@ app.use(function (err, req, res, next) {
   });
 });
 
-const PORT = process.env.PORT || 3000;
-
-const server = app.listen(PORT, () => {
-  console.log(`Servidor escuchando en http://localhost:${PORT}`);
-});
-
 // Manejo de errores del servidor
 server.on('error', error => {
   if (error.code === 'EADDRINUSE') {
