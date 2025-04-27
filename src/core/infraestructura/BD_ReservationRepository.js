@@ -1,5 +1,6 @@
 const ReservationFactory = require('../dominio/ReservationFactory');
 const ReservationRepository = require('../dominio/ReservationRepository');
+const pool = require('../infraestructura/db');
 
 /**
  * BD_ReservationRepository.js
@@ -10,77 +11,111 @@ const ReservationRepository = require('../dominio/ReservationRepository');
  * - Se encarga de la persistencia real del agregado
  */
 class BD_ReservationRepository extends ReservationRepository {
-
-    constructor() {
-        super();
-        this.reservations = new Map();
-        this.nextId = 1;
-    }
-
+   
     async findById(id) {
-        return this.reservations.get(Number(id)) || null;
+        const res = await pool.query(`
+            SELECT * FROM reservations WHERE id = $1
+        `, [id]);
+    
+        if (res.rows.length === 0) {
+            console.log('row null');
+            return null;
+        } 
+    
+        return ReservationFactory.createFromData(res.rows[0]);
     }
 
     async save(reservation) {
-        const id = reservation.id || this.nextId;
+        const res = await pool.query(`
+            INSERT INTO reservations ("userId", "spaceIds", "usageType", "maxAttendees", "startTime", duration, "endTime", "additionalDetails", category, status)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+            RETURNING *;
+        `, [
+            reservation.userId,
+            reservation.spaceIds,
+            reservation.usageType,
+            reservation.maxAttendees,
+            reservation.startTime,
+            reservation.duration,
+            reservation.endTime,
+            reservation.additionalDetails || null,
+            reservation.category,
+            reservation.status || 'pending'
+        ]);
 
-        let newReservation;
-        if (reservation.id) {
-            newReservation = ReservationFactory.createFromData({
-                ...reservation,
-                id: reservation.id
-            });
-        } else {
-            newReservation = ReservationFactory.createFromData({
-                ...reservation,
-                id: id
-            });
-            this.nextId++;
+        console.log('Row guardado:', res.rows[0]); 
+        if (!res.rows[0]) {
+            throw new Error('Reserva no guardada');
         }
-
-        this.reservations.set(id, newReservation);
-        return newReservation;
+        return ReservationFactory.createFromData(res.rows[0]);
     }
 
-    async update(id, partialData) {
-        const numericId = Number(id);
-      
-        if (!this.reservations.has(numericId)) {
-          throw new Error('Reserva no encontrada');
-        }
-        console.log('[DEBUG]Partial:\n', JSON.stringify(partialData, null, 2));
+    async update(reservation) {
+        const res = await pool.query(`
+            UPDATE reservations
+            SET "userId" = $1,
+                "spaceIds" = $2,
+                "usageType" = $3,
+                "maxAttendees" = $4,
+                "startTime" = $5,
+                duration = $6,
+                "endTime" = $7,
+                "additionalDetails" = $8,
+                category = $9,
+                status = $10
+            WHERE id = $11
+            RETURNING *;
+        `, [
+            reservation.userId,
+            reservation.spaceIds,
+            reservation.usageType,
+            reservation.maxAttendees,
+            reservation.startTime,
+            reservation.duration,
+            reservation.endTime,
+            reservation.additionalDetails || null,
+            reservation.category,
+            reservation.status,
+            reservation.id
+        ]);
+
+        const row = res.rows[0];
         
-        const existingReservation = this.reservations.get(numericId);
+        console.log('Row guardado:', res.rows[0]); 
+        if (!row) {
+            throw new Error('Reserva no encontrada');
+        }
+        return ReservationFactory.createFromData(row);
+    }
       
-        const updatedReservation = ReservationFactory.createFromData({
-          ...existingReservation,
-          ...partialData,
-          id: numericId 
-        });
-      
-        console.log('[DEBUG] updated:\n', JSON.stringify(updatedReservation, null, 2));
-
-        this.reservations.set(numericId, updatedReservation);
-        return updatedReservation;
-      }
-      
-
-    
 
     async delete(id) {
-        return this.reservations.delete(Number(id));
+        await pool.query('DELETE FROM reservations WHERE id = $1', [id]);
     }
 
     async findAll(filters = {}) {
-        let reservations = [...this.reservations.values()];
+        let query = 'SELECT * FROM reservations';
+        const conditions = [];
+        const values = [];
 
         if (filters.spaceId !== undefined) {
-            reservations = reservations.filter(r =>
-                r.space.some(s => s.id === filters.spaceId)
-            );
+            conditions.push(`$${values.length + 1} = ANY("spaceIds")`);
+            values.push(filters.spaceId);
         }
 
-        return reservations;
+        if (filters.userId !== undefined) {
+            conditions.push(`"userId" = $${values.length + 1}`);
+            values.push(filters.userId);
+        }
+
+        if (conditions.length > 0) {
+            query += ' WHERE ' + conditions.join(' AND ');
+        }
+
+        query += ' ORDER BY id ASC';
+
+        const res = await pool.query(query, values);
+        return res.rows.map(row => ReservationFactory.createFromData(row));
     }
 
     async findBySpaceId(spaceId) {
@@ -88,34 +123,45 @@ class BD_ReservationRepository extends ReservationRepository {
     }
 
     async findByUserId(userId) {
-        const reservations = [...this.reservations.values()];
-        return reservations.filter(r => String(r.userId) === String(userId));
+        return this.findAll({ userId });
     }
 
-    async findAliveReservation() {
+    async findAliveReservations() {
         const now = new Date();
-        return reservations.filter(r => new Date(r.endDate) > now);
-    }    
+        const res = await pool.query(`
+            SELECT * FROM reservations WHERE end_time > $1
+        `, [now]);
+
+        return res.rows.map(row => ReservationFactory.createFromData(row));
+    }
 
     async findOverlappingReservations(spaceIds, startTime, duration) {
-        const start = new Date(startTime); 
-        const endTime = new Date(start.getTime() + duration * 60000);
-    
-        const normalizedSpaceIds = Array.isArray(spaceIds)
-            ? spaceIds.flat(Infinity).map(s => (typeof s === 'object' && s !== null ? s.id : s))
-            : [typeof spaceIds === 'object' && spaceIds !== null ? spaceIds.id : spaceIds];
-    
-        const reservations = [...this.reservations.values()];
-        return reservations.filter(r => 
-            r.spaceIds.some(s => normalizedSpaceIds.includes(s.id)) &&
-            (
-                (start >= new Date(r.startTime) && start < new Date(r.endTime)) ||
-                (endTime > new Date(r.startTime) && endTime <= new Date(r.endTime)) ||
-                (start <= new Date(r.startTime) && endTime >= new Date(r.endTime))
-            )
+        const start = new Date(startTime);
+        const end = new Date(start.getTime() + duration * 60000);
+
+        const res = await pool.query(`
+            SELECT * FROM reservations
+            WHERE "spaceIds" && $1::int[]
+              AND (
+                ("startTime" <= $2 AND "endTime" > $2) OR
+                ("startTime" < $3 AND "endTime" >= $3) OR
+                ("startTime" >= $2 AND "endTime" <= $3)
+              )
+        `, [
+            Array.isArray(spaceIds) ? spaceIds : [spaceIds],
+            start,
+            end
+        ]);
+
+        if (res.rows.length === 0) {
+            return [];
+        }
+        const validRows = res.rows.filter(row =>
+            row.id && row.user_id && row.start_time && row.duration
         );
+        console.log('Overlapping reservations:', res.rows);
+        return res.rows.map(row => ReservationFactory.createFromData(row));
     }
-    
     
 }
 

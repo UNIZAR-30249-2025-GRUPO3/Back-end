@@ -223,40 +223,53 @@ class ReservationService {
     const reservation = await this.reservationRepository.findById(Reservationdata.id);
     if (!reservation) throw new Error('Reserva no encontrada');
     
-    reservation.status = 'deleted';
-    
     const updated = await this.reservationRepository.delete(reservation.id);
-    return updated;
+    
+    return {
+      id: Reservationdata.id,
+      deletedAt: new Date().toISOString()
+    };
   }
 
   // =====================================================
   // CASO DE USO: Validar o actualizar una reserva inválida
   // =====================================================
   async handleValidateReservation(Reservationdata) {
-    try{
-
-      if (!Reservationdata?.id) throw new Error('El campo "id" es requerido');
-
-    const reservation = await this.reservationRepository.findById(Reservationdata.id);
-    if (!reservation) throw new Error('Reserva no encontrada');
+    try {
+      if (!Reservationdata?.id) {
+        throw new Error('El campo "id" es requerido');
+      }
   
-    await this.validateUserCanReserveSpace(
-      Reservationdata.userId,
-      Reservationdata.spaceIds[0],
-      Reservationdata.category,
-      Reservationdata.maxAttendees,
-      Reservationdata.startTime,
-      Reservationdata.duration
-    );
+      const existingReservation = await this.reservationRepository.findById(Reservationdata.id);
+      if (!existingReservation) {
+        throw new Error('Reserva no encontrada');
+      }
+  
+      const reservationObj = existingReservation.toObject ? existingReservation.toObject() : existingReservation;
+  
+      await this.validateUserCanReserveSpace(
+        Reservationdata.userId,
+        Reservationdata.spaceIds[0],
+        Reservationdata.category,
+        Reservationdata.maxAttendees,
+        Reservationdata.startTime,
+        Reservationdata.duration
+      );
 
-    Reservationdata.status = 'valid';
-    const updated = await this.reservationRepository.update(Reservationdata.id, Reservationdata);
-    return updated;
-  } catch (error) {
-    console.error('[ERROR] Error al validar reserva:', error);
-    throw new Error(`Error al validar reserva: ${error.message}`);
+      const updatedReservation = {
+        ...reservationObj,
+        ...Reservationdata,
+        status: 'valid'  
+      };
+
+      const updated = await this.reservationRepository.update(updatedReservation);
+      return updated;
+    } catch (error) {
+      console.error('[ERROR] Error al validar reserva:', error);
+      throw new Error(`Error al validar reserva: ${error.message}`);
+    }
   }
-}
+  
 
   // ===================================
   // CASO DE USO: Invalidar una reserva
@@ -264,13 +277,19 @@ class ReservationService {
   async handleInvalidReservation(Reservationdata) {
     if (!Reservationdata?.id) throw new Error('El campo "id" es requerido');
 
-    const reservation = await this.reservationRepository.findById(Reservationdata.id);
-    if (!reservation) throw new Error('Reserva no encontrada');
+    const existingReservation = await this.reservationRepository.findById(Reservationdata.id);
+    if (!existingReservation) {
+      throw new Error('Reserva no encontrada');
+    }
+
+    const reservationObj = existingReservation.toObject ? existingReservation.toObject() : existingReservation;
   
-    // Solo pasar el campo que queremos actualizar
-    const updateData = { status: 'potentially_invalid' };
+    const updatedReservation = {
+      ...reservationObj,
+      status: 'potentially_invalid'  
+    };
     
-    const updated = await this.reservationRepository.update(Reservationdata.id, updateData);
+    const updated = await this.reservationRepository.update(updatedReservation);
     return updated;
 }
 
