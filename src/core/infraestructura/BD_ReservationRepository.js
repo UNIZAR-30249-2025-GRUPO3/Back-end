@@ -126,10 +126,10 @@ class BD_ReservationRepository extends ReservationRepository {
         return this.findAll({ userId });
     }
 
-    async findAliveReservations() {
+    async findAliveReservation() {
         const now = new Date();
         const res = await pool.query(`
-            SELECT * FROM reservations WHERE end_time > $1
+            SELECT * FROM reservations WHERE "endTime" > $1
         `, [now]);
 
         return res.rows.map(row => ReservationFactory.createFromData(row));

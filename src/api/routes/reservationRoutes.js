@@ -120,6 +120,22 @@ function setupReservationRoutes(reservationController) {
    */
   router.get('/', isAuthenticated, (req, res) => reservationController.getAllReservation(req, res));
 
+      /**
+   * @swagger
+   * /api/reservations/alive:
+   *   get:
+   *     summary: Obtener todas las reservas vivas
+   *     tags: [Reservations]
+   *     security:
+   *       - bearerAuth: []
+   *     responses:
+   *       200:
+   *         description: Lista de reservas vivas obtenida exitosamente
+   *       401:
+   *         description: No autenticado
+   */
+  router.get('/alive', isAuthenticated, (req, res) => reservationController.getAliveReservations(req, res));
+
   /**
    * @swagger
    * /api/reservations/{id}:
@@ -271,7 +287,6 @@ function setupReservationRoutes(reservationController) {
    *         description: Reserva no encontrada
    */
   router.put('/invalidate/:id', isAuthenticated, (req, res) => reservationController.invalidateReservation(req, res));
-
 
   return router;
 }
