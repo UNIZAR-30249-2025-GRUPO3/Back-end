@@ -1,6 +1,6 @@
 const request = require('supertest');
 const express = require('express');
-const setupUserRoutes = require('../src/api/routes/userRoutes');
+const setupUserRoutes = require('../src/api/routes/authRoutes');
 
 jest.mock('../src/api/middleware/authMiddleware', () => ({
     isAuthenticated: jest.fn((req, res, next) => next()),
@@ -19,7 +19,7 @@ describe('🔹 AuthRoutes', () => {
 
         app = express();
         app.use(express.json());
-        app.use('/api/users', setupUserRoutes(mockUserController));
+        app.use('/api/auth', setupUserRoutes(mockUserController));
     });
 
     afterEach(() => {
@@ -35,7 +35,7 @@ describe('🔹 AuthRoutes', () => {
                 password: 'password123'
             };
 
-            const response = await request(app).post('/api/users/login').send(loginData);
+            const response = await request(app).post('/api/auth/login').send(loginData);
 
             expect(response.status).toBe(200);
             expect(mockUserController.login).toHaveBeenCalled();
@@ -47,7 +47,7 @@ describe('🔹 AuthRoutes', () => {
 
         it('Se llama al método del controlador logout', async () => {
 
-            const response = await request(app).get('/api/users/logout');
+            const response = await request(app).get('/api/auth/logout');
 
             expect(response.status).toBe(200);
             expect(mockUserController.logout).toHaveBeenCalled();

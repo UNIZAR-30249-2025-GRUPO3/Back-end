@@ -69,8 +69,10 @@ describe('🔹 UserController', () => {
           data: req.body
         },
         mockUuid,
-        'user_responses'
+        'user_responses',
+        'user_operations'
       );
+      
       
       await messageBroker.mockConsumerCallback(mockResponse, mockUuid);
       
@@ -149,7 +151,8 @@ describe('🔹 UserController', () => {
           }
         },
         mockUuid,
-        'user_responses'
+        'user_responses',
+        'user_operations'
       );
       
       await messageBroker.mockConsumerCallback(mockResponse, mockUuid);
@@ -211,12 +214,13 @@ describe('🔹 UserController', () => {
           }
         },
         mockUuid,
-        'user_responses'
+        'user_responses',
+        'user_operations'
       );
       
       await messageBroker.mockConsumerCallback(mockResponse, mockUuid);
       
-      expect(res.status).toHaveBeenCalledWith(201);
+      expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith(mockResponse);
       expect(messageBroker.removeConsumer).toHaveBeenCalledWith('user_responses');
     });
@@ -264,12 +268,13 @@ describe('🔹 UserController', () => {
           }
         },
         mockUuid,
-        'user_responses'
+        'user_responses',
+        'user_operations'
       );
       
       await messageBroker.mockConsumerCallback(mockResponse, mockUuid);
       
-      expect(res.status).toHaveBeenCalledWith(204);
+      expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith(mockResponse);
       expect(messageBroker.removeConsumer).toHaveBeenCalledWith('user_responses');
     });
@@ -320,7 +325,8 @@ describe('🔹 UserController', () => {
           data: {}
         },
         mockUuid,
-        'user_responses'
+        'user_responses',
+        'user_operations'
       );
       
       await messageBroker.mockConsumerCallback(mockResponse, mockUuid);

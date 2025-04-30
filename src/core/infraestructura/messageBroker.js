@@ -5,8 +5,14 @@ class MessageBroker {
   constructor() {
     this.connection = null;
     this.channel = null;
-    this.requestQueue = 'user_operations'; // Cola de solicitudes
-    this.responseQueue = 'user_responses'; // Cola para respuestas
+    this.requestQueueA = 'user_operations'; // Cola de solicitudes para usuarios
+    this.responseQueueA = 'user_responses'; // Cola para respuestas para usuarios
+    this.requestQueueB = 'building_operations'; // Cola de solicitudes para edificios
+    this.responseQueueB = 'building_responses'; // Cola para respuestas para edificios
+    this.requestQueueC = 'space_operations'; // Cola de solicitudes para espacios
+    this.responseQueueC = 'space_responses'; // Cola para respuestas para espacios
+    this.requestQueueD = 'reservation_operations'; // Cola de solicitudes para espacios
+    this.responseQueueD = 'reservation_responses'; // Cola para respuestas para espacios
     this.amqpUrl = 'amqps://xvrhrdqc:WoZh4rUov7sSoTNqbRssm1YbgRpc647a@kebnekaise.lmq.cloudamqp.com/xvrhrdqc';
     this.consumerTags = {};
   }
@@ -14,14 +20,20 @@ class MessageBroker {
   async connect() {
     this.connection = await amqp.connect(this.amqpUrl);
     this.channel = await this.connection.createChannel();
-    await this.channel.assertQueue(this.requestQueue, { durable: true });
-    await this.channel.assertQueue(this.responseQueue, { durable: true }); 
+    await this.channel.assertQueue(this.requestQueueA, { durable: true });
+    await this.channel.assertQueue(this.responseQueueA, { durable: true }); 
+    await this.channel.assertQueue(this.requestQueueB, { durable: true });
+    await this.channel.assertQueue(this.responseQueueB, { durable: true }); 
+    await this.channel.assertQueue(this.requestQueueC, { durable: true });
+    await this.channel.assertQueue(this.responseQueueC, { durable: true }); 
+    await this.channel.assertQueue(this.requestQueueD, { durable: true });
+    await this.channel.assertQueue(this.responseQueueD, { durable: true }); 
     console.log('[RabbitMQ] Conectado a CloudAMQP');
   }
 
-  async publish(message, correlationId, replyToQueue) {
+  async publish(message, correlationId, replyToQueue, requestQueue) {
     await this.channel.sendToQueue(
-      this.requestQueue,
+      requestQueue,
       Buffer.from(JSON.stringify({ ...message, replyTo: replyToQueue })), // Usamos replyTo dinámicamente
       { persistent: true, correlationId }
     );

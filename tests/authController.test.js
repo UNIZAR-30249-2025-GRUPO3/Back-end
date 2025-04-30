@@ -1,4 +1,4 @@
-const UserController = require('../src/api/controllers/userController');
+const AuthController = require('../src/api/controllers/authController');
 const messageBroker = require('../src/core/infraestructura/messageBroker');
 const { v4: uuidv4 } = require('uuid');
 
@@ -6,7 +6,7 @@ jest.mock('../src/core/infraestructura/messageBroker');
 jest.mock('uuid');
 
 describe('🔹 AuthController', () => {
-    let userController;
+    let authController;
     let req;
     let res;
     const mockUuid = '12345-mock-uuid';
@@ -25,7 +25,7 @@ describe('🔹 AuthController', () => {
         });
         messageBroker.removeConsumer.mockResolvedValue();
         
-        userController = new UserController();
+        authController = new AuthController();
         
         req = {
         body: {},
@@ -58,7 +58,7 @@ describe('🔹 AuthController', () => {
                 }
             };
 
-            await userController.login(req, res);
+            await authController.login(req, res);
 
             expect(messageBroker.publish).toHaveBeenCalledWith(
                 {
@@ -69,7 +69,8 @@ describe('🔹 AuthController', () => {
                 }
                 },
                 mockUuid,
-                'user_responses'
+                'user_responses',
+                'user_operations'
             );
             
             await messageBroker.mockConsumerCallback(mockResponse, mockUuid);
@@ -96,7 +97,7 @@ describe('🔹 AuthController', () => {
                 error: 'Contraseña incorrecta'
             };
 
-            await userController.login(req, res);
+            await authController.login(req, res);
 
             expect(messageBroker.publish).toHaveBeenCalled();
             
@@ -111,7 +112,7 @@ describe('🔹 AuthController', () => {
 
             messageBroker.publish.mockRejectedValue(new Error('Server Error'));
 
-            await userController.login(req, res);
+            await authController.login(req, res);
 
             expect(res.status).toHaveBeenCalledWith(500);
             expect(res.send).toHaveBeenCalledWith('Server Error');
@@ -128,8 +129,7 @@ describe('🔹 AuthController', () => {
 
         it('Se cierra sesión correctamente', async () => {
 
-            await userController.logout(req, res);
-
+            await authController.logout(req, res);
 
             expect(req.session.reset).toHaveBeenCalled();
             expect(res.json).toHaveBeenCalledWith({
