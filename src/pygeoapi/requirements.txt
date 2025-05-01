@@ -1,0 +1,4 @@
+pygeoapi
+gunicorn
+geoalchemy2
+psycopg2-binary
