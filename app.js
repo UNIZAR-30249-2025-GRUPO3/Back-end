@@ -92,4 +92,10 @@ app.use(function (err, req, res, next) {
   });
 });
 
+app.get('/openapi.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(swaggerDocs);
+});
+
+
 module.exports = app;

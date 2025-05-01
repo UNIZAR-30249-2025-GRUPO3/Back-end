@@ -108,3 +108,9 @@ resources:
         type: process
         processor:
             name: HelloWorld
+
+links:
+  - type: application/openapi+json;version=3.0
+    rel: service-desc
+    title: Express API definition
+    href: https://back-end-sv3z.onrender.com/openapi.json  
