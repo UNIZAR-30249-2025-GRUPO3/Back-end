@@ -48,6 +48,13 @@ const reservationController = new ReservationController();
 
 var app = express();
 
+const cors = require('cors');
+app.use(cors({
+  origin: ['https://pygeoapi.onrender.com'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 app.use(sessions({
   cookieName: 'session',
   secret: 'secret'
