@@ -2,6 +2,14 @@ const SpaceType = require('./SpaceType');
 const ReservationCategory = require('./ReservationCategory');
 const AssignmentTarget = require('./AssignmentTarget');
 
+const validReservationCategoriesPerSpaceType = {
+    'aula': ['aula', 'seminario', 'laboratorio', 'sala común'],
+    'seminario': ['aula', 'seminario', 'sala común'],
+    'laboratorio': ['aula', 'seminario', 'laboratorio'],
+    'despacho': ['despacho'],
+    'sala común': ['aula', 'seminario', 'sala común'],
+};
+
 /**
  * Space.js
  * 
@@ -105,6 +113,20 @@ class Space {
         // Validar que si es despacho, no sea reservable
         if (this.reservationCategory && this.reservationCategory.name === "despacho") {
             throw new Error("Los despachos no pueden hacerse reservables.");
+        }
+
+        // Validar que el tipo de espacio permita la categoría de reserva
+        if (this.isReservable && this.reservationCategory) {
+            const spaceTypeName = this.spaceType.name;
+            const reservationCategoryName = this.reservationCategory.name;
+
+            const allowedCategories = validReservationCategoriesPerSpaceType[spaceTypeName];
+
+            if (!allowedCategories || !allowedCategories.includes(reservationCategoryName)) {
+                throw new Error(
+                    `No se permite asignar la categoría de reserva '${reservationCategoryName}' al tipo de espacio '${spaceTypeName}'.`
+                );
+            }
         }
     }
 }
