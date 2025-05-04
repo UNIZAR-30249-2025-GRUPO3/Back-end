@@ -3,7 +3,7 @@ const express = require('express');
  * @swagger
  * tags:
  *   name: Users
- *   description: Endpoints para la gestión de usuarios
+ *   description: Endpoints para la gestión de usuarios. Hace falta iniciar sesión como gerente para poder ejecutar operaciones de usuario.
  */
 
 /**
@@ -92,7 +92,7 @@ function setupUserRoutes(userController) {
  *       400:
  *         description: Error en la solicitud (correo ya en uso o datos inválidos)
  */
-  router.post('/', (req, res) => userController.createUser(req, res));
+  router.post('/', isAuthenticated, gerenteAuthorized, (req, res) => userController.createUser(req, res));
 
   /**
  * @swagger
@@ -128,14 +128,14 @@ function setupUserRoutes(userController) {
  *       500:
  *         description: Error en el servidor
  */
-  router.get('/search/:id', /*isAuthenticated, gerenteAuthorized, */(req, res) => userController.getUserById(req, res));
+  router.get('/search/:id', isAuthenticated, gerenteAuthorized, (req, res) => userController.getUserById(req, res));
 
   /**
  * @swagger
  * /api/users/{id}:
  *   put:
- *     summary: Actualizar información de un usuario por ID. Hace falta haber iniciado sesión como gerente para poder ejecutar la operación.
- *     description: Actualiza los datos de un usuario existente usando su ID. Solo se actualizan los campos proporcionados en el cuerpo de la solicitud. Hace falta haber iniciado sesión como gerente para poder ejecutar la operación.
+ *     summary: Actualizar información de un usuario por ID.
+ *     description: Actualiza los datos de un usuario existente usando su ID. Solo se actualizan los campos proporcionados en el cuerpo de la solicitud.
  *     tags: [Users]
  *     parameters:
  *       - in: path
@@ -186,8 +186,8 @@ function setupUserRoutes(userController) {
  * @swagger
  * /api/users/{id}:
  *   delete:
- *     summary: Eliminar un usuario por ID.  Hace falta haber iniciado sesión como gerente para poder ejecutar la operación.
- *     description: Elimina un usuario de la base de datos usando su ID. Hace falta haber iniciado sesión como gerente para poder ejecutar la operación.
+ *     summary: Eliminar un usuario por ID.
+ *     description: Elimina un usuario de la base de datos usando su ID.
  *     tags: [Users]
  *     parameters:
  *       - in: path
@@ -246,7 +246,7 @@ function setupUserRoutes(userController) {
  *       500:
  *         description: Error en el servidor
  */
-  router.get('/', /*isAuthenticated, gerenteAuthorized, */(req, res) => userController.getAllUsers(req, res));
+  router.get('/', isAuthenticated, gerenteAuthorized, (req, res) => userController.getAllUsers(req, res));
 
   return router;
 }
