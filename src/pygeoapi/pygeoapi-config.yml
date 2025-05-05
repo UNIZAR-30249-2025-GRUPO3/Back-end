@@ -100,8 +100,8 @@ resources:
                 user: laboratoriosoft_user
                 password: 9SA3aakFKS1ePkUiPLQzKD286bL0hRvU
                 connect_timeout: 10
-              id_field: id_espacio
-              table: espacios_geograficos
+              id_field: id
+              table: spaces
               geom_field: geom
 
     hello-world:

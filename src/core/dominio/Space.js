@@ -23,10 +23,10 @@ class Space {
     // ES PROBABLE QUE SEA NECESARIO VALIDAR EL CAMPO isReservable (tabla) *********************************************************
 
     constructor(id, name, floor, capacity, spaceType, isReservable, reservationCategory, 
-                assignmentTarget, maxUsagePercentage, customSchedule) {
+                assignmentTarget, maxUsagePercentage, customSchedule, idSpace) {
         
         // Validaciones que mantienen la integridad del agregado
-        this.validateSpaceInput(id, name, floor, capacity, spaceType);
+        this.validateSpaceInput(id, name, floor, capacity, spaceType, idSpace);
 
         // =======================
         // Propiedades invariables
@@ -56,12 +56,15 @@ class Space {
         // Horario personalizado (o null si usa el del edificio)
         this.customSchedule = customSchedule || null;
 
+        // Identificador del espacio en la vida real
+        this.idSpace = idSpace;
+
         // Validación adicional de consistencia interna del agregado
         this.validateSpaceConsistency();
     }
 
     // ASERCIÓN: Método que valida las invariantes básicas del agregado
-    validateSpaceInput(id, name, floor, capacity, spaceType) {
+    validateSpaceInput(id, name, floor, capacity, spaceType, idSpace) {
         if (!id) {
             throw new Error("ERROR: Falta asignar un identificador");
         }
@@ -80,6 +83,10 @@ class Space {
 
         if (!spaceType) {
             throw new Error("El tipo de espacio es obligatorio.");
+        }
+
+        if (!idSpace) {
+            throw new Error("El id real del espacio es obligatorio.");
         }
     }
 
