@@ -4,8 +4,8 @@ const AssignmentTarget = require('./AssignmentTarget');
 
 const validReservationCategoriesPerSpaceType = {
     'aula': ['aula', 'seminario', 'laboratorio', 'sala común'],
-    'seminario': ['aula', 'seminario', 'sala común'],
-    'laboratorio': ['aula', 'seminario', 'laboratorio'],
+    'seminario': ['aula', 'seminario', 'laboratorio', 'sala común'],
+    'laboratorio': ['aula', 'laboratorio'],
     'despacho': ['despacho'],
     'sala común': ['aula', 'seminario', 'sala común'],
 };
