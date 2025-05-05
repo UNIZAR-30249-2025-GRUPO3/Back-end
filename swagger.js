@@ -11,9 +11,12 @@ const swaggerOptions = {
         },
         servers: [
             {
-                url: "http://localhost:3000",
+                url: "http://localhost:3000"
             },
-        ],
+            {
+                url: "https://back-end-sv3z.onrender.com"
+            }
+        ],        
     },
     apis: ["./src/api/routes/*.js"],
 };
