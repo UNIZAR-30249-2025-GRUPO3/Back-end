@@ -63,7 +63,7 @@ function setupUserRoutes(userController) {
  * /api/users:
  *   post:
  *     summary: Crear un nuevo usuario
- *     description: Crea un usuario y lo almacena en la base de datos.
+ *     description: Crea un usuario y lo almacena en la base de datos. Requiere autenticación y rol de gerente.
  *     tags: [Users]
  *     requestBody:
  *       required: true
@@ -99,7 +99,7 @@ function setupUserRoutes(userController) {
  * /api/users/search/{id}:
  *   get:
  *     summary: Obtener información de un usuario por ID
- *     description: Recupera los datos de un usuario existente usando su ID.
+ *     description: Recupera los datos de un usuario existente usando su ID. Requiere autenticación y rol de gerente.
  *     tags: [Users]
  *     parameters:
  *       - in: path
@@ -135,7 +135,7 @@ function setupUserRoutes(userController) {
  * /api/users/{id}:
  *   put:
  *     summary: Actualizar información de un usuario por ID.
- *     description: Actualiza los datos de un usuario existente usando su ID. Solo se actualizan los campos proporcionados en el cuerpo de la solicitud.
+ *     description: Actualiza los datos de un usuario existente usando su ID. Solo se actualizan los campos proporcionados en el cuerpo de la solicitud. Requiere autenticación y rol de gerente.
  *     tags: [Users]
  *     parameters:
  *       - in: path
@@ -187,7 +187,7 @@ function setupUserRoutes(userController) {
  * /api/users/{id}:
  *   delete:
  *     summary: Eliminar un usuario por ID.
- *     description: Elimina un usuario de la base de datos usando su ID.
+ *     description: Elimina un usuario de la base de datos usando su ID. Requiere autenticación y rol de gerente.
  *     tags: [Users]
  *     parameters:
  *       - in: path
@@ -223,7 +223,7 @@ function setupUserRoutes(userController) {
  * /api/users:
  *   get:
  *     summary: Obtener todos los usuarios
- *     description: Devuelve una lista de todos los usuarios registrados.
+ *     description: Devuelve una lista de todos los usuarios registrados. Requiere autenticación y rol de gerente.
  *     tags: [Users]
  *     responses:
  *       200:
