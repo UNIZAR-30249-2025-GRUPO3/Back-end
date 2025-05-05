@@ -49,10 +49,12 @@ const reservationController = new ReservationController();
 var app = express();
 
 const cors = require('cors');
+// DEMOMENTO LOCALHOST PARA DESARROLLO FRONTEND - LUEGO CAMBIAR POR EL REAL
 app.use(cors({
-  origin: ['https://pygeoapi.onrender.com'],
+  origin: ['https://pygeoapi.onrender.com', 'http://localhost:3000'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
 }));
 
 app.use(sessions({
