@@ -68,6 +68,11 @@ class BD_SpaceRepository extends SpaceRepository {
       
     
       async update(space) {
+        const reservationCategory =
+        typeof space.reservationCategory === 'object' && space.reservationCategory !== null
+          ? space.reservationCategory.name
+          : space.reservationCategory;
+
         const res = await pool.query(`
           UPDATE spaces
           SET nombre = $1,
@@ -89,7 +94,7 @@ class BD_SpaceRepository extends SpaceRepository {
           space.max_usage_percentage,
           space.assignmentTarget.type || null, 
           space.assignmentTarget.targets || null, 
-          space.reservationCategory || null,
+          reservationCategory || null,
           space.spaceType || 'otro',
           space.id,
         ]);
@@ -104,8 +109,9 @@ class BD_SpaceRepository extends SpaceRepository {
         return SpaceFactory.createFromData({
           ...row,
           name: space.name,
-          assignmentTarget: assignmentTarget
- 
+          assignmentTarget: assignmentTarget,
+          reservationCategory: row.reservation_category,
+          isReservable: row.is_reservable
         });
       }
     
@@ -126,6 +132,11 @@ class BD_SpaceRepository extends SpaceRepository {
         if (filters.is_reservable !== undefined) {
           values.push(filters.is_reservable);
           conditions.push(`is_reservable = $${values.length}`);
+        }
+
+        if (filters.maxUsagePercentage !== undefined) {
+          values.push(filters.maxUsagePercentage);
+          conditions.push(`maxUsagePercentage = $${values.length}`);
         }
     
         if (conditions.length > 0) {
