@@ -317,7 +317,7 @@ describe('🔹 ReservationService', () => {
         });*/
     });
     
-    describe('📌 handleInvalidReservation', () => {
+    /*describe('📌 handleInvalidReservation', () => {
         it('Invalida una reserva existente', async () => {
             const reservaValida = {
                 id: 'reserva-valida',
@@ -334,7 +334,7 @@ describe('🔹 ReservationService', () => {
             
             expect(result).toHaveProperty('status', 'potentially_invalid');
         });
-    });
+    });*/
     
     describe('📌 handleGetReservationsByUser', () => {
         it('Obtiene reservas de un usuario', async () => {

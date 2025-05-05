@@ -48,7 +48,7 @@ class BD_SpaceRepository extends SpaceRepository {
           space.reservationCategory || null,
           space.spaceType || 'otro',
         ]);
-      
+        console.log('Res categoryS:', space.reservationCategory); 
         const row = res.rows[0];
         if (!row) {
             throw new Error('Espacio no guardado');
@@ -60,8 +60,9 @@ class BD_SpaceRepository extends SpaceRepository {
         return SpaceFactory.createFromData({
           ...row,
           name: space.name,
-          assignmentTarget: assignmentTarget
- 
+          assignmentTarget: assignmentTarget,
+          reservationCategory: row.reservation_category,
+          isReservable: row.is_reservable
         });
       }
       
