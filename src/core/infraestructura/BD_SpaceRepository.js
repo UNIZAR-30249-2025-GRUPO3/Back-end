@@ -15,7 +15,7 @@ class BD_SpaceRepository extends SpaceRepository {
     // DE MOMENTO LA PERSISTENCIA SE HACE EN MEMORIA PARA PRUEBAS - LUEGO PASAR A BD
 
     async findById(id) {
-        const res = await pool.query('SELECT id, nombre as name, floor, capacity, "spaceType", is_reservable as "isReservable", reservation_category as "reservationCategory", assignment_type as "assignmentType", assignment_targets as "assignmentTargets", max_usage_percentage as maxUsagePercentage FROM spaces WHERE id = $1', [id]);
+        const res = await pool.query('SELECT id, nombre as name, floor, capacity, "spaceType", is_reservable as "isReservable", reservation_category as "reservationCategory", assignment_type as "assignmentType", assignment_targets as "assignmentTargets", max_usage_percentage as maxUsagePercentage, "idSpace" FROM spaces WHERE id = $1', [id]);
         if (res.rows.length === 0) return null;
         const row = res.rows[0];
         if (!row) {
@@ -34,8 +34,8 @@ class BD_SpaceRepository extends SpaceRepository {
     
       async save(space) {
         const res = await pool.query(`
-          INSERT INTO spaces (nombre, floor, capacity, is_reservable, max_usage_percentage, assignment_type, assignment_targets, reservation_category, "spaceType")
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+          INSERT INTO spaces (nombre, floor, capacity, is_reservable, max_usage_percentage, assignment_type, assignment_targets, reservation_category, "spaceType", "idSpace")
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
           RETURNING *;
         `, [
           space.name, 
@@ -47,8 +47,9 @@ class BD_SpaceRepository extends SpaceRepository {
           space.assignmentTarget.targets || null, 
           space.reservationCategory || null,
           space.spaceType || 'otro',
+          space.idSpace
         ]);
-      
+        console.log('[DEBUG] Resultado de la inserción:', res.rows[0]);
         const row = res.rows[0];
         if (!row) {
             throw new Error('Espacio no guardado');
@@ -60,13 +61,20 @@ class BD_SpaceRepository extends SpaceRepository {
         return SpaceFactory.createFromData({
           ...row,
           name: space.name,
-          assignmentTarget: assignmentTarget
- 
+          assignmentTarget: assignmentTarget,
+          reservationCategory: row.reservation_category,
+          isReservable: row.is_reservable,
+          idSpace: row.idSpace
         });
       }
       
     
       async update(space) {
+        const reservationCategory =
+        typeof space.reservationCategory === 'object' && space.reservationCategory !== null
+          ? space.reservationCategory.name
+          : space.reservationCategory;
+
         const res = await pool.query(`
           UPDATE spaces
           SET nombre = $1,
@@ -77,8 +85,9 @@ class BD_SpaceRepository extends SpaceRepository {
               assignment_type = $6,
               assignment_targets = $7,
               reservation_category = $8,
-              "spaceType" = $9
-          WHERE id = $10
+              "spaceType" = $9,
+              "idSpace" = $10
+          WHERE id = $11
           RETURNING *;
         `, [
           space.name,
@@ -88,14 +97,16 @@ class BD_SpaceRepository extends SpaceRepository {
           space.max_usage_percentage,
           space.assignmentTarget.type || null, 
           space.assignmentTarget.targets || null, 
-          space.reservationCategory || null,
+          reservationCategory || null,
           space.spaceType || 'otro',
+          space.idSpace,
           space.id,
         ]);
         const row = res.rows[0];
         if (!row) {
             throw new Error('Espacio no encontrado');
         }
+        console.log('[DEBUG] Resultado de la inserción:', res.rows[0]);
         const assignmentTarget = {
           type: row.assignment_type,
           targets: row.assignment_targets
@@ -103,8 +114,9 @@ class BD_SpaceRepository extends SpaceRepository {
         return SpaceFactory.createFromData({
           ...row,
           name: space.name,
-          assignmentTarget: assignmentTarget
- 
+          assignmentTarget: assignmentTarget,
+          reservationCategory: row.reservation_category,
+          isReservable: row.is_reservable,
         });
       }
     
@@ -113,9 +125,10 @@ class BD_SpaceRepository extends SpaceRepository {
       }
     
       async findAll(filters = {}) {
-        let query = 'SELECT id, nombre as name, floor, capacity, "spaceType", is_reservable as isReservable, reservation_category as reservationCategory, assignment_type as "assignmentType", assignment_targets as "assignmentTargets", max_usage_percentage as maxUsagePercentage FROM spaces';
+        let query = 'SELECT id, nombre as name, floor, capacity, "spaceType", "idSpace", is_reservable as isReservable, reservation_category as reservationCategory, assignment_type as "assignmentType", assignment_targets as "assignmentTargets", max_usage_percentage as maxUsagePercentage FROM spaces';
         const conditions = [];
         const values = [];
+        console.log('[DEBUG] ReservationCategory:', filters.reservationCategory);
 
         if (filters.floor !== undefined) {
           values.push(filters.floor);
@@ -126,6 +139,16 @@ class BD_SpaceRepository extends SpaceRepository {
           values.push(filters.is_reservable);
           conditions.push(`is_reservable = $${values.length}`);
         }
+
+        if (filters.reservationCategory !== undefined) {
+          values.push(filters.reservationCategory);
+          conditions.push(`reservation_category = $${values.length}`);
+        }
+      
+        if (filters.capacity !== undefined) {
+          values.push(filters.capacity);
+          conditions.push(`capacity >= $${values.length}`);
+        }
     
         if (conditions.length > 0) {
           query += ' WHERE ' + conditions.join(' AND ');
@@ -135,6 +158,8 @@ class BD_SpaceRepository extends SpaceRepository {
 
         const res = await pool.query(query, values);
 
+        console.log('[DEBUG] Resultado de la inserción:', res.rows[0]);
+
         return res.rows.map(row => {
             const assignmentTarget = {
                 type: row.assignmentType,
@@ -143,17 +168,16 @@ class BD_SpaceRepository extends SpaceRepository {
         
             return SpaceFactory.createFromData({
                 ...row,
-                assignmentTarget: assignmentTarget
+                assignmentTarget: assignmentTarget,
+                reservationCategory: row.reservationcategory, 
+                isReservable: row.isreservable,
             });
         });
       }
-
-    async findByFilters(filters) {
-        return this.findAll(filters);
-    }      
+ 
 
     async findByFloor(floor) {
-        const res = await pool.query('SELECT id, nombre as name, floor, capacity, "spaceType", is_reservable as isReservable, reservation_category as reservationCategory, assignment_type as "assignmentType", assignment_targets as "assignmentTargets", max_usage_percentage as maxUsagePercentage FROM spaces WHERE floor = $1 ORDER BY id ASC', [floor]);
+        const res = await pool.query('SELECT id, nombre as name, floor, capacity, "spaceType", is_reservable as isReservable, reservation_category as reservationCategory, assignment_type as "assignmentType", assignment_targets as "assignmentTargets", max_usage_percentage as maxUsagePercentage, "idSpace" FROM spaces WHERE floor = $1 ORDER BY id ASC', [floor]);
         return res.rows.map(row => {
             const assignmentTarget = {
                 type: row.assignmentType,
@@ -168,7 +192,7 @@ class BD_SpaceRepository extends SpaceRepository {
     } 
 
     async findByCategory(category) {
-        const res = await pool.query('SELECT id, nombre as name, floor, capacity, "spaceType", is_reservable as isReservable, reservation_category as reservationCategory, assignment_type as "assignmentType", assignment_targets as "assignmentTargets", max_usage_percentage as maxUsagePercentage FROM spaces WHERE reservation_category = $1 ORDER BY id ASC', [category]);
+        const res = await pool.query('SELECT id, nombre as name, floor, capacity, "spaceType", is_reservable as isReservable, reservation_category as reservationCategory, assignment_type as "assignmentType", assignment_targets as "assignmentTargets", max_usage_percentage as maxUsagePercentage, "idSpace" FROM spaces WHERE reservation_category = $1 ORDER BY id ASC', [category]);
         return res.rows.map(row => {
             const assignmentTarget = {
                 type: row.assignmentType,
@@ -184,7 +208,7 @@ class BD_SpaceRepository extends SpaceRepository {
     
 
     async findByDepartment(department) {
-        const res = await pool.query(`SELECT id, nombre as name, floor, capacity, "spaceType", is_reservable as isReservable, reservation_category as reservationCategory, assignment_type as "assignmentType", assignment_targets as "assignmentTargets", max_usage_percentage as maxUsagePercentage FROM spaces WHERE assignment_type = 'department' AND assignment_targets @> ARRAY[$1] ORDER BY id ASC`, [department]);
+        const res = await pool.query(`SELECT id, nombre as name, floor, capacity, "spaceType", is_reservable as isReservable, reservation_category as reservationCategory, assignment_type as "assignmentType", assignment_targets as "assignmentTargets", max_usage_percentage as maxUsagePercentage, "idSpace" FROM spaces WHERE assignment_type = 'department' AND assignment_targets @> ARRAY[$1] ORDER BY id ASC`, [department]);
         return res.rows.map(row => {
             const assignmentTarget = {
                 type: row.assignmentType,

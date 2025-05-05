@@ -31,6 +31,7 @@ const express = require('express');
  *         - spaceType
  *         - isReservable
  *         - assignmentTarget
+ *         - idSpace
  *       properties:
  *         id:
  *           type: string
@@ -61,6 +62,9 @@ const express = require('express');
  *               items:
  *                 type: string
  *               description: IDs de los targets (personas o departamentos)
+ *         idSpace:
+ *           type: string
+ *           description: ID real del espacio
  *         maxUsagePercentage:
  *           type: integer
  *           nullable: true
@@ -98,6 +102,7 @@ function setupSpaceRoutes(spaceController) {
    *             spaceType: "aula"
    *             isReservable: true
    *             reservationCategory: "aula"
+   *             idSpace: "CRE.1200.05.320"
    *             assignmentTarget:
    *               type: "eina"
    *               targets: []

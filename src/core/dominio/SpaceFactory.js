@@ -11,10 +11,10 @@ class SpaceFactory {
   
     // FUNCIÓN FACTORÍA: Crea un espacio estándar
     static createStandardSpace(id, name, floor, capacity, spaceType, isReservable, reservationCategory, 
-                                assignmentTarget, maxUsagePercentage, customSchedule) {
+                                assignmentTarget, maxUsagePercentage, customSchedule, idSpace) {
         return new Space(
             id, name, floor, capacity, spaceType, isReservable, reservationCategory, 
-            assignmentTarget, maxUsagePercentage, customSchedule
+            assignmentTarget, maxUsagePercentage, customSchedule, idSpace
         );
     }
     
@@ -31,6 +31,7 @@ class SpaceFactory {
             spaceData.assignmentTarget,
             spaceData.maxUsagePercentage,
             spaceData.customSchedule,
+            spaceData.idSpace
         );
     }
 }

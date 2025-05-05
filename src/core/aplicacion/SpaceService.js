@@ -175,7 +175,9 @@ class SpaceService {
             spaceData.reservationCategory,
             spaceData.assignmentTarget,
             spaceData.maxUsagePercentage,
-            spaceData.customSchedule
+            spaceData.customSchedule,
+            spaceData.spaceType,
+            spaceData.idSpace
         );
       } catch (error) {
             throw new Error(error.message);
@@ -191,7 +193,8 @@ class SpaceService {
         reservationCategory: spaceData.reservationCategory,
         assignmentTarget: spaceData.assignmentTarget,
         maxUsagePercentage: spaceData.maxUsagePercentage,
-        customSchedule: spaceData.customSchedule
+        customSchedule: spaceData.customSchedule,
+        idSpace: spaceData.idSpace
       };
 
       // Persistencia mediante repositorio
@@ -307,9 +310,15 @@ class SpaceService {
       // Preservación del estado
       const spaceObj = space.toObject ? space.toObject() : space;
       
+      const normalizedUpdateFields = {
+        ...spaceData.updateFields,
+        spaceType: spaceData.updateFields.spaceType?.name || spaceObj.spaceType?.name || spaceObj.spaceType,
+        reservationCategory: spaceData.updateFields.reservationCategory?.name || spaceData.updateFields.reservationCategory
+      };
+
       const updatedData = {
         ...spaceObj,
-        ...spaceData.updateFields
+        ...normalizedUpdateFields // ¡Esto sobrescribe los campos correctamente!
       };
     
       // Se completa la información del edificio para cada espacio si es necesario
@@ -342,6 +351,7 @@ class SpaceService {
 
       // Validación del dominio mediante factoría
       try {
+        console.log('[DEBUG] updated:', updatedData);
         SpaceFactory.createFromData(updatedData);
       } catch (error) {
         throw new Error(error.message);
