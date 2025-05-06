@@ -21,6 +21,15 @@ class SpaceService {
 
     this.messageBroker = messageBroker; // Guarda la instancia
     
+    // Lista de campos permitidos para actualización
+    this.allowedUpdateFields = [
+      'reservationCategory',
+      'assignmentTarget',
+      'maxUsagePercentage', 
+      'customSchedule',
+      'isReservable'
+    ];
+    
     // Inicialización de consumidores de mensajes
     this.setupConsumers().catch(err => {
       console.error('Error al iniciar consumidor:', err);
@@ -294,6 +303,14 @@ class SpaceService {
     if (!spaceData.updateFields || Object.keys(spaceData.updateFields).length === 0) {
       throw new Error('Se requieren campos para actualizar');
     }
+    
+    // Valida que no se estén intentando actualizar campos no permitidos
+    const attemptedFields = Object.keys(spaceData.updateFields);
+    const invalidFields = attemptedFields.filter(field => !this.allowedUpdateFields.includes(field));
+    
+    if (invalidFields.length > 0) {
+      throw new Error(`No se permite actualizar los siguientes campos: ${invalidFields.join(', ')}. Los campos permitidos son: ${this.allowedUpdateFields.join(', ')}`);
+    }
   
     console.log(`[SpaceService] Iniciando actualización para ID: ${spaceData.id}`);
     console.log('[DEBUG] Campos a actualizar:', spaceData.updateFields);
@@ -318,7 +335,7 @@ class SpaceService {
 
       const updatedData = {
         ...spaceObj,
-        ...normalizedUpdateFields // ¡Esto sobrescribe los campos correctamente!
+        ...normalizedUpdateFields // Esto sobrescribe solo los campos permitidos
       };
     
       // Se completa la información del edificio para cada espacio si es necesario

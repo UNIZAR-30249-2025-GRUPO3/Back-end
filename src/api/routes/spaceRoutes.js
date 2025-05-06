@@ -146,8 +146,8 @@ function setupSpaceRoutes(spaceController) {
    * @swagger
    * /api/spaces/{id}:
    *   put:
-   *     summary: Actualizar información de un espacio por ID
-   *     description: Actualiza los datos de un espacio existente. Requiere autenticación y rol de gerente.
+   *     summary: Actualizar información limitada de un espacio por ID
+   *     description: Actualiza solo campos específicos permitidos de un espacio existente. Requiere autenticación y rol de gerente.
    *     tags: [Spaces]
    *     parameters:
    *       - in: path
@@ -162,12 +162,44 @@ function setupSpaceRoutes(spaceController) {
    *         application/json:
    *           schema:
    *             type: object
-   *             description: Campos a actualizar (parcial)
+   *             description: Solo se pueden actualizar los siguientes campos
+   *             properties:
+   *               reservationCategory:
+   *                 $ref: '#/components/schemas/ReservationCategory'
+   *                 description: Categoría de reserva del espacio
+   *               assignmentTarget:
+   *                 type: object
+   *                 properties:
+   *                   type:
+   *                     $ref: '#/components/schemas/AssignmentTargetType'
+   *                   targets:
+   *                     type: array
+   *                     items:
+   *                       type: string
+   *                     description: IDs de los targets (personas o departamentos)
+   *               maxUsagePercentage:
+   *                 type: integer
+   *                 nullable: true
+   *                 description: Porcentaje máximo de uso (null usa el valor del edificio)
+   *               customSchedule:
+   *                 type: object
+   *                 nullable: true
+   *                 description: Horario personalizado (null usa el horario del edificio)
+   *               isReservable:
+   *                 type: boolean
+   *                 description: Indica si el espacio se puede reservar
+   *           example:
+   *             reservationCategory: "aula"
+   *             isReservable: true
+   *             assignmentTarget:
+   *               type: "eina"
+   *               targets: []
+   *             maxUsagePercentage: 75
    *     responses:
    *       200:
    *         description: Espacio actualizado exitosamente
    *       400:
-   *         description: Error en la solicitud (campos inválidos)
+   *         description: Error en la solicitud (campos inválidos o no permitidos)
    *       401:
    *         description: No autenticado
    *       403:
