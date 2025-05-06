@@ -15,7 +15,7 @@ class BD_SpaceRepository extends SpaceRepository {
     // DE MOMENTO LA PERSISTENCIA SE HACE EN MEMORIA PARA PRUEBAS - LUEGO PASAR A BD
 
     async findById(id) {
-        const res = await pool.query('SELECT id, nombre as name, floor, capacity, "spaceType", is_reservable as "isReservable", reservation_category as "reservationCategory", assignment_type as "assignmentType", assignment_targets as "assignmentTargets", max_usage_percentage as "maxUsagePercentage", "idSpace", custom_schedule FROM spaces WHERE id = $1', [id]);
+        const res = await pool.query('SELECT id, nombre as name, floor, capacity, "spaceType", "idSpace", is_reservable as isReservable, reservation_category as reservationCategory, assignment_type as "assignmentType", assignment_targets as "assignmentTargets", max_usage_percentage,"idSpace", custom_schedule  FROM spaces WHERE id = $1', [id]);
         if (res.rows.length === 0) return null;
         const row = res.rows[0];
         if (!row) {
@@ -27,9 +27,12 @@ class BD_SpaceRepository extends SpaceRepository {
         };
         return SpaceFactory.createFromData({
           ...row,
-          assignmentTarget: assignmentTarget
+          assignmentTarget: assignmentTarget,
+          reservationCategory: row.reservationcategory, 
+          isReservable: row.isreservable,
+          maxUsagePercentage: row.max_usage_percentage,
+          customSchedule: row.custom_schedule
         });
-        
       }
     
       async save(space) {
@@ -132,7 +135,7 @@ class BD_SpaceRepository extends SpaceRepository {
       }
     
       async findAll(filters = {}) {
-        let query = 'SELECT id, nombre as name, floor, capacity, "spaceType", "idSpace", is_reservable as isReservable, reservation_category as reservationCategory, assignment_type as "assignmentType", assignment_targets as "assignmentTargets", max_usage_percentage as maxUsagePercentage FROM spaces';
+        let query = 'SELECT id, nombre as name, floor, capacity, "spaceType", "idSpace", is_reservable as isReservable, reservation_category as reservationCategory, assignment_type as "assignmentType", assignment_targets as "assignmentTargets", max_usage_percentage,"idSpace", custom_schedule  FROM spaces';
         const conditions = [];
         const values = [];
         console.log('[DEBUG] ReservationCategory:', filters.reservationCategory);
@@ -178,6 +181,8 @@ class BD_SpaceRepository extends SpaceRepository {
                 assignmentTarget: assignmentTarget,
                 reservationCategory: row.reservationcategory, 
                 isReservable: row.isreservable,
+                maxUsagePercentage: row.max_usage_percentage,
+                customSchedule: row.custom_schedule
             });
         });
       }
