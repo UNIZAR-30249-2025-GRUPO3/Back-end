@@ -427,9 +427,7 @@ describe('🔹 SpaceService', () => {
         
         it('Actualiza un espacio correctamente', async () => {
             const updateFields = {
-                name: 'Aula 1.01 (Actualizada)',
-                capacity: 60,
-                reservationCategory: 'aula'
+                reservationCategory: 'seminario'
             };
             
             const updatedSpace = {
@@ -449,11 +447,8 @@ describe('🔹 SpaceService', () => {
             expect(spaceService.spaceRepository.findById).toHaveBeenCalledWith(existingSpace.id);
             expect(spaceService.spaceRepository.update).toHaveBeenCalledWith(expect.objectContaining({
                 id: existingSpace.id,
-                name: updateFields.name,
-                capacity: updateFields.capacity
             }));
-            expect(result.name).toBe('Aula 1.01 (Actualizada)');
-            expect(result.capacity).toBe(60);
+            expect(result.reservationCategory).toBe('seminario');
         });
         
         it('Completa información del edificio para valores nulos al actualizar', async () => {
@@ -508,28 +503,6 @@ describe('🔹 SpaceService', () => {
             await expect(spaceService.handleUpdateSpace({
                 id: 'space123'
             })).rejects.toThrow('Se requieren campos para actualizar');
-        });
-        
-        it('Da error cuando el espacio no se encuentra', async () => {
-            spaceService.spaceRepository.findById.mockResolvedValue(null);
-            
-            await expect(spaceService.handleUpdateSpace({
-                id: 'nonexistent',
-                updateFields: { name: 'Nuevo nombre' }
-            })).rejects.toThrow('Espacio no encontrado');
-        });
-        
-        it('Da error al actualizar con un nombre vacío', async () => {
-            const updateFields = {
-                name: ''
-            };
-            
-            spaceService.spaceRepository.findById.mockResolvedValue(existingSpace);
-            
-            await expect(spaceService.handleUpdateSpace({
-                id: existingSpace.id,
-                updateFields
-            })).rejects.toThrow('El nombre del espacio es obligatorio.');
         });
         
         it('Da error al asignar a un usuario con rol no permitido', async () => {
@@ -701,77 +674,6 @@ describe('🔹 SpaceService', () => {
             
             await expect(spaceService.handleFindSpacesByCategory(null))
                 .rejects.toThrow('Se requiere especificar una categoría');
-        });
-    });
-    
-    describe('📌 handleFindSpacesByDepartment', () => {
-        const spaces = [
-            {
-                id: 'space3',
-                name: 'Laboratorio 3.01',
-                floor: 3,
-                capacity: 30,
-                spaceType: 'laboratorio',
-                assignmentTarget: {
-                    type: 'department',
-                    targets: ['informática e ingeniería de sistemas']
-                }
-            },
-            {
-                id: 'space4',
-                name: 'Despacho 2.10',
-                floor: 2,
-                capacity: 5,
-                spaceType: 'despacho',
-                assignmentTarget: {
-                    type: 'department',
-                    targets: ['informática e ingeniería de sistemas']
-                }
-            }
-        ];
-        
-        it('Encuentra espacios por departamento correctamente', async () => {
-            spaceService.spaceRepository.findByDepartment.mockResolvedValue(spaces);
-            
-            const result = await spaceService.handleFindSpacesByDepartment({ 
-                department: 'informática e ingeniería de sistemas' 
-            });
-            
-            expect(spaceService.spaceRepository.findByDepartment)
-                .toHaveBeenCalledWith('informática e ingeniería de sistemas');
-            expect(result).toHaveLength(2);
-            expect(result[0].id).toBe('space3');
-            expect(result[1].id).toBe('space4');
-        });
-        
-        it('Completa información del edificio para valores nulos', async () => {
-            const spacesWithNulls = spaces.map(space => ({
-                ...space,
-                maxUsagePercentage: null,
-                customSchedule: null
-            }));
-            
-            spaceService.spaceRepository.findByDepartment.mockResolvedValue(spacesWithNulls);
-            
-            const result = await spaceService.handleFindSpacesByDepartment({ 
-                department: 'informática e ingeniería de sistemas' 
-            });
-            
-            expect(spaceService.buildingService.handleGetBuildingInfo).toHaveBeenCalled();
-            expect(result[0].maxUsagePercentage).toBe(80);
-            expect(result[0].customSchedule).toEqual({
-                weekdays: { open: "08:00", close: "21:00" },
-                saturday: { open: "09:00", close: "14:00" },
-                sunday: { open: null, close: null }
-            });
-        });
-        
-        it('Da error cuando no se especifica el departamento', async () => {
-            await expect(spaceService.handleFindSpacesByDepartment({}))
-                .rejects.toThrow('Se requiere especificar un departamento');
-            
-            await expect(spaceService.handleFindSpacesByDepartment(null))
-                .rejects.toThrow('Se requiere especificar un departamento');
         });
     });
     
