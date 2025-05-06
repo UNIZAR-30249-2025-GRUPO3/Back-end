@@ -40,10 +40,6 @@ class SpaceController {
     await this.sendMessage('findSpacesByCategory', { category: req.params.category }, res);
   }
 
-  async findSpacesByDepartment(req, res) {
-    await this.sendMessage('findSpacesByDepartment', { department: req.params.department }, res);
-  }
-
   async findSpacesByMinOccupants(req, res) {
     await this.sendMessage('findSpacesByMinOccupants', { minOccupants: parseInt(req.params.minOccupants) }, res);
   }

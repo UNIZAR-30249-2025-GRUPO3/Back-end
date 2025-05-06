@@ -63,9 +63,6 @@ class SpaceService {
             case 'findSpacesByCategory':
               result = await this.handleFindSpacesByCategory(message.data);
               break;
-            case 'findSpacesByDepartment':
-              result = await this.handleFindSpacesByDepartment(message.data);
-              break;
             case 'findSpacesByMinOccupants':
               result = await this.handleFindSpacesByMinOccupants(message.data);
               break;
@@ -483,42 +480,6 @@ class SpaceService {
     } catch (error) {
       console.error('[ERROR] Error al buscar espacios por categoría:', error);
       throw new Error(`Error al buscar espacios por categoría: ${error.message}`);
-    }
-  }
-
-  // =============================================
-  // CASO DE USO: Buscar espacios por departamento
-  // =============================================
-  async handleFindSpacesByDepartment(searchData) {
-
-    if (!searchData || !searchData.department) {
-      throw new Error('Se requiere especificar un departamento');
-    }
-
-    console.log(`[SpaceService] Buscando espacios asignados al departamento: ${searchData.department}`);
-
-    try {
-      const spaces = await this.spaceRepository.findByDepartment(searchData.department);
-      
-      // Se obtiene la información del edificio para completar valores nulos
-      const buildingInfo = await this.buildingService.handleGetBuildingInfo();
-      
-      // Se completa la información del edificio para cada espacio
-      for (const space of spaces) {
-        if (space.maxUsagePercentage === null) {
-          space.maxUsagePercentage = buildingInfo.occupancyPercentage;
-        }
-        
-        if (space.customSchedule === null) {
-          space.customSchedule = buildingInfo.openingHours;
-        }
-      }
-
-      console.log(`[SpaceService] Espacios encontrados para departamento ${searchData.department}: ${spaces.length}`);
-      return spaces;
-    } catch (error) {
-      console.error('[ERROR] Error al buscar espacios por departamento:', error);
-      throw new Error(`Error al buscar espacios por departamento: ${error.message}`);
     }
   }
 

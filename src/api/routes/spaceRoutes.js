@@ -272,28 +272,6 @@ function setupSpaceRoutes(spaceController) {
 
   /**
    * @swagger
-   * /api/spaces/department/{department}:
-   *   get:
-   *     summary: Buscar espacios por departamento
-   *     description: Devuelve todos los espacios asignados a un departamento específico.
-   *     tags: [Spaces]
-   *     parameters:
-   *       - in: path
-   *         name: department
-   *         required: true
-   *         description: Nombre del departamento
-   *         schema:
-   *           type: string
-   *     responses:
-   *       200:
-   *         description: Lista de espacios encontrados
-   *       400:
-   *         description: Error en la solicitud (departamento inválido)
-   */
-  router.get('/department/:department', (req, res) => spaceController.findSpacesByDepartment(req, res));
-
-  /**
-   * @swagger
    * /api/spaces/occupants/{minOccupants}:
    *   get:
    *     summary: Buscar espacios por ocupantes mínimos

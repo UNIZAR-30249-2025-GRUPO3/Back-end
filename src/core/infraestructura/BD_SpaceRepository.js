@@ -206,22 +206,6 @@ class BD_SpaceRepository extends SpaceRepository {
         });
     }
     
-
-    async findByDepartment(department) {
-        const res = await pool.query(`SELECT id, nombre as name, floor, capacity, "spaceType", is_reservable as isReservable, reservation_category as reservationCategory, assignment_type as "assignmentType", assignment_targets as "assignmentTargets", max_usage_percentage as maxUsagePercentage, "idSpace" FROM spaces WHERE assignment_type = 'department' AND assignment_targets @> ARRAY[$1] ORDER BY id ASC`, [department]);
-        return res.rows.map(row => {
-            const assignmentTarget = {
-                type: row.assignmentType,
-                targets: row.assignmentTargets
-            };
-        
-            return SpaceFactory.createFromData({
-                ...row,
-                assignmentTarget: assignmentTarget
-            });
-        });
-    }
-
     async findByMinCapacity(minOccupants) {
       const res = await pool.query(`SELECT id, nombre as name, floor, capacity, "spaceType", is_reservable as isReservable, reservation_category as reservationCategory, assignment_type as "assignmentType", assignment_targets as "assignmentTargets", max_usage_percentage as maxUsagePercentage, "idSpace" FROM spaces ORDER BY id ASC`);
       
