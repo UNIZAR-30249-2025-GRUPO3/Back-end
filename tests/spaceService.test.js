@@ -418,6 +418,7 @@ describe('🔹 SpaceService', () => {
             customSchedule: {
                 weekdays: { open: "08:00", close: "20:00" }
             },
+            idSpace: "CRE.prueba",
             toObject: function() {
                 const { toObject, ...rest } = this;
                 return rest;
@@ -427,7 +428,8 @@ describe('🔹 SpaceService', () => {
         it('Actualiza un espacio correctamente', async () => {
             const updateFields = {
                 name: 'Aula 1.01 (Actualizada)',
-                capacity: 60
+                capacity: 60,
+                reservationCategory: 'aula'
             };
             
             const updatedSpace = {
@@ -457,7 +459,8 @@ describe('🔹 SpaceService', () => {
         it('Completa información del edificio para valores nulos al actualizar', async () => {
             const updateFields = {
                 maxUsagePercentage: null,
-                customSchedule: null
+                customSchedule: null,
+                reservationCategory: 'aula'
             };
             
             const spaceObj = existingSpace.toObject();
