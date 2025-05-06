@@ -87,8 +87,6 @@ function setupSpaceRoutes(spaceController) {
    *     summary: Crear un nuevo espacio
    *     description: Crea un espacio y lo almacena en la base de datos. Requiere autenticación y rol de gerente.
    *     tags: [Spaces]
-   *     security:
-   *       - bearerAuth: []
    *     requestBody:
    *       required: true
    *       content:
@@ -151,8 +149,6 @@ function setupSpaceRoutes(spaceController) {
    *     summary: Actualizar información de un espacio por ID
    *     description: Actualiza los datos de un espacio existente. Requiere autenticación y rol de gerente.
    *     tags: [Spaces]
-   *     security:
-   *       - bearerAuth: []
    *     parameters:
    *       - in: path
    *         name: id
@@ -188,8 +184,6 @@ function setupSpaceRoutes(spaceController) {
    *     summary: Eliminar un espacio por ID
    *     description: Elimina un espacio de la base de datos. Requiere autenticación y rol de gerente.
    *     tags: [Spaces]
-   *     security:
-   *       - bearerAuth: []
    *     parameters:
    *       - in: path
    *         name: id
