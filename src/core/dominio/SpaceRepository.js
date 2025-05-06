@@ -46,6 +46,10 @@ class SpaceRepository {
     async findByDepartment(department) {
       throw new Error('Método no implementado');
     }
+
+    async findByMinCapacity(minOccupants) {
+      throw new Error('Método no implementado');
+    }
 }
   
 module.exports = SpaceRepository;

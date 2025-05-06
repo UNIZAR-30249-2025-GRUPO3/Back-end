@@ -292,6 +292,28 @@ function setupSpaceRoutes(spaceController) {
    */
   router.get('/department/:department', (req, res) => spaceController.findSpacesByDepartment(req, res));
 
+  /**
+   * @swagger
+   * /api/spaces/occupants/{minOccupants}:
+   *   get:
+   *     summary: Buscar espacios por ocupantes mínimos
+   *     description: Devuelve todos los espacios que pueden acomodar al menos un número específico de ocupantes, considerando el porcentaje máximo de ocupación.
+   *     tags: [Spaces]
+   *     parameters:
+   *       - in: path
+   *         name: minOccupants
+   *         required: true
+   *         description: Número mínimo de ocupantes requeridos
+   *         schema:
+   *           type: integer
+   *     responses:
+   *       200:
+   *         description: Lista de espacios encontrados
+   *       400:
+   *         description: Error en la solicitud (valor inválido)
+   */
+  router.get('/occupants/:minOccupants', (req, res) => spaceController.findSpacesByMinOccupants(req, res));
+
   return router;
 }
 

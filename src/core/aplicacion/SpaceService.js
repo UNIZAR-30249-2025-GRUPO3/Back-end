@@ -66,6 +66,9 @@ class SpaceService {
             case 'findSpacesByDepartment':
               result = await this.handleFindSpacesByDepartment(message.data);
               break;
+            case 'findSpacesByMinOccupants':
+              result = await this.handleFindSpacesByMinOccupants(message.data);
+              break;
             default:
               throw new Error(`Operación no soportada: ${message.operation}`);
           }
@@ -516,6 +519,59 @@ class SpaceService {
     } catch (error) {
       console.error('[ERROR] Error al buscar espacios por departamento:', error);
       throw new Error(`Error al buscar espacios por departamento: ${error.message}`);
+    }
+  }
+
+  // ==============================================
+  // CASO DE USO: Buscar espacios por ocupantes mínimos
+  // ==============================================
+  async handleFindSpacesByMinOccupants(searchData) {
+
+    if (!searchData || searchData.minOccupants === undefined) {
+      throw new Error('Se requiere especificar un número mínimo de ocupantes');
+    }
+
+    // Aseguramos que sea un número
+    const minOccupants = parseInt(searchData.minOccupants, 10);
+    if (isNaN(minOccupants) || minOccupants <= 0) {
+      throw new Error('El número mínimo de ocupantes debe ser un número positivo');
+    }
+
+    console.log(`[SpaceService] Buscando espacios con capacidad para al menos: ${minOccupants} ocupantes`);
+
+    try {
+      let spaces = await this.spaceRepository.findByMinCapacity(minOccupants);
+      
+      // Se obtiene la información del edificio para completar valores nulos
+      const buildingInfo = await this.buildingService.handleGetBuildingInfo();
+      
+      // Se completa la información del edificio para cada espacio
+      spaces = spaces.filter(space => {
+
+        if (space.maxUsagePercentage !== null) {
+          return true;
+        }
+        
+        const buildingPercentage = buildingInfo.occupancyPercentage || 100;
+        const adjustedCapacity = Math.floor((space.capacity * buildingPercentage) / 100);
+        return adjustedCapacity >= minOccupants;
+      });
+      
+      for (const space of spaces) {
+        if (space.maxUsagePercentage === null) {
+          space.maxUsagePercentage = buildingInfo.occupancyPercentage;
+        }
+        
+        if (space.customSchedule === null) {
+          space.customSchedule = buildingInfo.openingHours;
+        }
+      }
+
+      console.log(`[SpaceService] Espacios encontrados con capacidad para al menos ${minOccupants} ocupantes: ${spaces.length}`);
+      return spaces;
+    } catch (error) {
+      console.error('[ERROR] Error al buscar espacios por ocupantes mínimos:', error);
+      throw new Error(`Error al buscar espacios por ocupantes mínimos: ${error.message}`);
     }
   }
 }
