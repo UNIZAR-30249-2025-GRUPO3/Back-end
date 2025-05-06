@@ -15,7 +15,7 @@ class BD_SpaceRepository extends SpaceRepository {
     // DE MOMENTO LA PERSISTENCIA SE HACE EN MEMORIA PARA PRUEBAS - LUEGO PASAR A BD
 
     async findById(id) {
-        const res = await pool.query('SELECT id, nombre as name, floor, capacity, "spaceType", is_reservable as "isReservable", reservation_category as "reservationCategory", assignment_type as "assignmentType", assignment_targets as "assignmentTargets", max_usage_percentage as maxUsagePercentage, "idSpace" FROM spaces WHERE id = $1', [id]);
+        const res = await pool.query('SELECT id, nombre as name, floor, capacity, "spaceType", is_reservable as "isReservable", reservation_category as "reservationCategory", assignment_type as "assignmentType", assignment_targets as "assignmentTargets", max_usage_percentage as "maxUsagePercentage", "idSpace", custom_schedule FROM spaces WHERE id = $1', [id]);
         if (res.rows.length === 0) return null;
         const row = res.rows[0];
         if (!row) {
@@ -34,8 +34,8 @@ class BD_SpaceRepository extends SpaceRepository {
     
       async save(space) {
         const res = await pool.query(`
-          INSERT INTO spaces (nombre, floor, capacity, is_reservable, max_usage_percentage, assignment_type, assignment_targets, reservation_category, "spaceType", "idSpace")
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+          INSERT INTO spaces (nombre, floor, capacity, is_reservable, max_usage_percentage, assignment_type, assignment_targets, reservation_category, "spaceType", "idSpace", custom_schedule)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
           RETURNING *;
         `, [
           space.name, 
@@ -47,7 +47,8 @@ class BD_SpaceRepository extends SpaceRepository {
           space.assignmentTarget.targets || null, 
           space.reservationCategory || null,
           space.spaceType || 'otro',
-          space.idSpace
+          space.idSpace,
+          space.customSchedule ? JSON.stringify(space.customSchedule) : null
         ]);
         console.log('[DEBUG] Resultado de la inserción:', res.rows[0]);
         const row = res.rows[0];
@@ -64,7 +65,9 @@ class BD_SpaceRepository extends SpaceRepository {
           assignmentTarget: assignmentTarget,
           reservationCategory: row.reservation_category,
           isReservable: row.is_reservable,
-          idSpace: row.idSpace
+          idSpace: row.idSpace,
+          maxUsagePercentage: row.max_usage_percentage,
+          customSchedule: row.custom_schedule
         });
       }
       
@@ -86,20 +89,22 @@ class BD_SpaceRepository extends SpaceRepository {
               assignment_targets = $7,
               reservation_category = $8,
               "spaceType" = $9,
-              "idSpace" = $10
-          WHERE id = $11
+              "idSpace" = $10,
+              custom_schedule = $11
+          WHERE id = $12
           RETURNING *;
         `, [
           space.name,
           space.floor,
           space.capacity,
           space.isReservable,
-          space.max_usage_percentage,
+          space.maxUsagePercentage,
           space.assignmentTarget.type || null, 
           space.assignmentTarget.targets || null, 
           reservationCategory || null,
           space.spaceType || 'otro',
           space.idSpace,
+          space.customSchedule ? JSON.stringify(space.customSchedule) : null,
           space.id,
         ]);
         const row = res.rows[0];
@@ -117,6 +122,8 @@ class BD_SpaceRepository extends SpaceRepository {
           assignmentTarget: assignmentTarget,
           reservationCategory: row.reservation_category,
           isReservable: row.is_reservable,
+          maxUsagePercentage: row.max_usage_percentage,
+          customSchedule: row.custom_schedule
         });
       }
     

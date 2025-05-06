@@ -330,7 +330,8 @@ class SpaceService {
       const normalizedUpdateFields = {
         ...spaceData.updateFields,
         spaceType: spaceData.updateFields.spaceType?.name || spaceObj.spaceType?.name || spaceObj.spaceType,
-        reservationCategory: spaceData.updateFields.reservationCategory?.name || spaceData.updateFields.reservationCategory
+        reservationCategory: spaceData.updateFields.reservationCategory?.name || spaceObj.reservationCategory?.name
+        || spaceObj.reservationCategory,
       };
 
       const updatedData = {
