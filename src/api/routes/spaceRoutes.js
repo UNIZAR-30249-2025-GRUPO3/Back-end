@@ -185,6 +185,40 @@ function setupSpaceRoutes(spaceController) {
    *                 type: object
    *                 nullable: true
    *                 description: Horario personalizado (null usa el horario del edificio)
+   *                 properties:
+   *                   weekdays:
+   *                     type: object
+   *                     properties:
+   *                       open:
+   *                         type: string
+   *                         format: time
+   *                         example: "08:30"
+   *                       close:
+   *                         type: string
+   *                         format: time
+   *                         example: "20:00"
+   *                   saturday:
+   *                     type: object
+   *                     properties:
+   *                       open:
+   *                         type: string
+   *                         format: time
+   *                         nullable: true
+   *                       close:
+   *                         type: string
+   *                         format: time
+   *                         nullable: true
+   *                   sunday:
+   *                     type: object
+   *                     properties:
+   *                       open:
+   *                         type: string
+   *                         format: time
+   *                         nullable: true
+   *                       close:
+   *                         type: string
+   *                         format: time
+   *                         nullable: true
    *               isReservable:
    *                 type: boolean
    *                 description: Indica si el espacio se puede reservar
@@ -195,6 +229,11 @@ function setupSpaceRoutes(spaceController) {
    *               type: "eina"
    *               targets: []
    *             maxUsagePercentage: 75
+   *             customSchedule: {
+   *               weekdays: { open: "08:30", close: "20:00" },
+   *               saturday: { open: "09:00", close: "14:00" },
+   *               sunday: { open: null, close: null }
+   *             }
    *     responses:
    *       200:
    *         description: Espacio actualizado exitosamente
