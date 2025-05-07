@@ -85,10 +85,19 @@ app.use(function (err, req, res, next) {
   });
 });
 
-app.get('/openapi.json', (req, res) => {
-  res.setHeader('Content-Type', 'application/json');
-  res.send(swaggerDocs);
+const PORT = process.env.PORT || 3000;
+
+const server = app.listen(PORT, () => {
+  console.log(`Servidor escuchando en http://localhost:${PORT}`);
 });
 
+// Manejo de errores del servidor
+server.on('error', error => {
+  if (error.code === 'EADDRINUSE') {
+    console.error(`El puerto ${PORT} está en uso. Prueba con otro puerto.`);
+  } else {
+    console.error('Error al iniciar el servidor:', error);
+  }
+});
 
 module.exports = app;
