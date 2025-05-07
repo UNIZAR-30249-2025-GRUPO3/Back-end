@@ -94,6 +94,20 @@ app.use(function (err, req, res, next) {
   });
 });
 
+const fetch = require('node-fetch');
+
+app.get('/api/espacios', async (req, res) => {
+  try {
+    const url = 'https://pygeoapi.onrender.com/collections/espacios_geograficos/items?f=json&limit=10&properties=nombre,floor&skipGeometry=false&offset=0';
+    const response = await fetch(url);
+    const data = await response.json();
+    res.json(data);
+  } catch (err) {
+    console.error('Error al consultar PyGeoAPI:', err.message);
+    res.status(500).json({ error: 'Error al consultar PyGeoAPI' });
+  }
+});
+
 app.get('/openapi.json', (req, res) => {
   res.setHeader('Content-Type', 'application/json');
   res.send(swaggerDocs);
