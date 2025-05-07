@@ -68,6 +68,26 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Proxy a pygeoapi
+const fetch = require('node-fetch');
+
+app.use('/pygeoapi', async (req, res) => {
+  try {
+    const pygeoapiUrl = `https://pygeoapi.onrender.com${req.originalUrl.replace('/pygeoapi', '')}`;
+    const response = await fetch(pygeoapiUrl);
+
+    const contentType = response.headers.get('content-type') || 'application/json';
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Access-Control-Allow-Origin', '*');
+
+    const data = await response.text();
+    res.send(data);
+  } catch (error) {
+    console.error('Error en proxy a pygeoapi:', error);
+    res.status(500).json({ error: 'Error al acceder a pygeoapi' });
+  }
+});
+
 // Rutas de API
 app.use('/api/users', setupUserRoutes(userController));
 app.use('/api/auth', setupAuthRoutes(authController));
