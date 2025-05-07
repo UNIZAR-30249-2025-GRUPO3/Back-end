@@ -68,29 +68,6 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Proxy a pygeoapi
-const fetch = require('node-fetch');
-
-app.get('/pygeoapi/*', async (req, res) => {
-  const pygeoapiUrl = `https://pygeoapi.onrender.com/${req.params[0]}`;
-  console.log("Proxying to:", pygeoapiUrl);
-  
-  try {
-    const response = await fetch(pygeoapiUrl);
-    
-    if (!response.ok) {
-      console.error(`PyGeoAPI responded with status: ${response.status}`);
-      return res.status(response.status).json({ error: `Upstream error from PyGeoAPI: ${response.status}` });
-    }
-
-    const data = await response.json();
-    res.json(data);
-  } catch (error) {
-    console.error('Error proxying request to pygeoapi:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
-
 // Rutas de API
 app.use('/api/users', setupUserRoutes(userController));
 app.use('/api/auth', setupAuthRoutes(authController));
