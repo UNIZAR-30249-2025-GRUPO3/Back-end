@@ -10,7 +10,7 @@ server:
         # First language is the default language
         - en-US
         - fr-CA
-    # cors: true
+    cors: true
     pretty_print: true
     limits:
         default_items: 20
