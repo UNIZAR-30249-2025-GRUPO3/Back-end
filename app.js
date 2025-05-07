@@ -71,20 +71,23 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Proxy a pygeoapi
 const fetch = require('node-fetch');
 
-app.use('/pygeoapi', async (req, res) => {
+app.get('/pygeoapi/*', async (req, res) => {
+  const pygeoapiUrl = `https://pygeoapi.onrender.com/${req.params[0]}`;
+  console.log("Proxying to:", pygeoapiUrl);
+  
   try {
-    const pygeoapiUrl = `https://pygeoapi.onrender.com${req.originalUrl.replace('/pygeoapi', '')}`;
     const response = await fetch(pygeoapiUrl);
+    
+    if (!response.ok) {
+      console.error(`PyGeoAPI responded with status: ${response.status}`);
+      return res.status(response.status).json({ error: `Upstream error from PyGeoAPI: ${response.status}` });
+    }
 
-    const contentType = response.headers.get('content-type') || 'application/json';
-    res.setHeader('Content-Type', contentType);
-    res.setHeader('Access-Control-Allow-Origin', '*');
-
-    const data = await response.text();
-    res.send(data);
+    const data = await response.json();
+    res.json(data);
   } catch (error) {
-    console.error('Error en proxy a pygeoapi:', error);
-    res.status(500).json({ error: 'Error al acceder a pygeoapi' });
+    console.error('Error proxying request to pygeoapi:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
