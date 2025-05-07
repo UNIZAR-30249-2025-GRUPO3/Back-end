@@ -10,10 +10,7 @@ server:
     # First language is the default language
     - en-US
     - fr-CA
-  cors:
-    allowed_origins:
-      - http://localhost:3000
-    # - En el futuro la desplegada
+  cors: true
   pretty_print: true
   limits:
     default_items: 20
