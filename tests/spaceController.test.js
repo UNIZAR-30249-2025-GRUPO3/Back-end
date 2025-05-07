@@ -196,18 +196,18 @@ describe('🔹 SpaceController', () => {
         id: '123'
       };
       req.body = {
-        name: 'Laboratorio Actualizado',
-        capacity: 35,
-        maxUsagePercentage: 90
+        reservationCategory: 'laboratorio',
+        maxUsagePercentage: 90,
+        isReservable: true
       };
     });
 
     it('Se actualiza correctamente un espacio', async () => {
       const mockResponse = {
         id: '123',
-        name: 'Laboratorio Actualizado',
+        name: 'Laboratorio de Informática',
         floor: 2,
-        capacity: 35,
+        capacity: 30,
         spaceType: 'laboratorio',
         isReservable: true,
         reservationCategory: 'laboratorio',
@@ -226,7 +226,11 @@ describe('🔹 SpaceController', () => {
           operation: 'updateSpace',
           data: {
             id: '123',
-            updateFields: req.body
+            updateFields: {
+              reservationCategory: 'laboratorio',
+              maxUsagePercentage: 90,
+              isReservable: true
+            }
           }
         },
         mockUuid,
@@ -243,7 +247,7 @@ describe('🔹 SpaceController', () => {
 
     it('Se maneja el error cuando la actualización falla', async () => {
       const mockError = {
-        error: 'Ya existe un espacio con ese nombre'
+        error: 'Error al actualizar el espacio'
       };
 
       await spaceController.updateSpace(req, res);
@@ -254,6 +258,68 @@ describe('🔹 SpaceController', () => {
       
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith(mockError);
+      expect(messageBroker.removeConsumer).toHaveBeenCalledWith('space_responses');
+    });
+
+    it('No permite actualizar campos no permitidos', async () => {
+      req.body = {
+        name: 'Laboratorio Actualizado',
+        capacity: 35,
+        floor: 3
+      };
+
+      await spaceController.updateSpace(req, res);
+      
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({
+        error: 'No se permite actualizar los siguientes campos: name, capacity, floor. Los campos permitidos son: reservationCategory, assignmentTarget, maxUsagePercentage, customSchedule, isReservable'
+      });
+      expect(messageBroker.publish).not.toHaveBeenCalled();
+    });
+
+    it('No permite actualizar con un objeto vacío', async () => {
+      req.body = {};
+
+      await spaceController.updateSpace(req, res);
+      
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({
+        error: 'No se proporcionaron campos válidos para actualizar. Los campos permitidos son: reservationCategory, assignmentTarget, maxUsagePercentage, customSchedule, isReservable, y spaceType.'
+      });
+      expect(messageBroker.publish).not.toHaveBeenCalled();
+    });
+
+    it('Permite actualizar un subconjunto de campos permitidos', async () => {
+      req.body = {
+        isReservable: false
+      };
+
+      const mockResponse = {
+        id: '123',
+        isReservable: false,
+      };
+
+      await spaceController.updateSpace(req, res);
+
+      expect(messageBroker.publish).toHaveBeenCalledWith(
+        {
+          operation: 'updateSpace',
+          data: {
+            id: '123',
+            updateFields: {
+              isReservable: false
+            }
+          }
+        },
+        mockUuid,
+        'space_responses',
+        'space_operations'
+      );
+      
+      await messageBroker.mockConsumerCallback(mockResponse, mockUuid);
+      
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith(mockResponse);
       expect(messageBroker.removeConsumer).toHaveBeenCalledWith('space_responses');
     });
   });
@@ -510,79 +576,6 @@ describe('🔹 SpaceController', () => {
       };
 
       await spaceController.findSpacesByCategory(req, res);
-
-      expect(messageBroker.publish).toHaveBeenCalled();
-      
-      await messageBroker.mockConsumerCallback(mockError, mockUuid);
-      
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith(mockError);
-      expect(messageBroker.removeConsumer).toHaveBeenCalledWith('space_responses');
-    });
-  });
-
-  describe('📌 findSpacesByDepartment', () => {
-    beforeEach(() => {
-      req.params = {
-        department: 'informática e ingeniería de sistemas'
-      };
-    });
-
-    it('Se obtienen correctamente los espacios por departamento', async () => {
-      const mockResponse = [
-        {
-          id: '123',
-          name: 'Laboratorio de Informática',
-          floor: 2,
-          capacity: 30,
-          spaceType: 'laboratorio',
-          isReservable: true,
-          reservationCategory: 'laboratorio',
-          assignmentTarget: {
-            type: 'department',
-            targets: ['informática e ingeniería de sistemas']
-          }
-        },
-        {
-          id: '789',
-          name: 'Sala de Investigación',
-          floor: 3,
-          capacity: 10,
-          spaceType: 'sala común',
-          isReservable: true,
-          reservationCategory: 'sala común',
-          assignmentTarget: {
-            type: 'department',
-            targets: ['informática e ingeniería de sistemas']
-          }
-        }
-      ];
-
-      await spaceController.findSpacesByDepartment(req, res);
-
-      expect(messageBroker.publish).toHaveBeenCalledWith(
-        {
-          operation: 'findSpacesByDepartment',
-          data: { department: 'informática e ingeniería de sistemas' }
-        },
-        mockUuid,
-        'space_responses',
-        'space_operations'
-      );
-      
-      await messageBroker.mockConsumerCallback(mockResponse, mockUuid);
-      
-      expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json).toHaveBeenCalledWith(mockResponse);
-      expect(messageBroker.removeConsumer).toHaveBeenCalledWith('space_responses');
-    });
-
-    it('Se maneja el error en la búsqueda por departamento', async () => {
-      const mockError = {
-        error: 'Error al buscar espacios por departamento'
-      };
-
-      await spaceController.findSpacesByDepartment(req, res);
 
       expect(messageBroker.publish).toHaveBeenCalled();
       

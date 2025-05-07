@@ -9,9 +9,9 @@ class Building {
         this.name = "Edificio Ada Byron";
         this.floors = 4;
         this._maxOccupancyPercentage = 100;
-        this._openingHours = {
-            weekdays: { open: "08:00", close: "21:00" },
-            saturday: { open: "09:00", close: "14:00" },
+        this._openingHours = {  // Según la información de Google Maps
+            weekdays: { open: "08:00", close: "21:30" },
+            saturday: { open: null, close: null },
             sunday: { open: null, close: null }
         };
     }

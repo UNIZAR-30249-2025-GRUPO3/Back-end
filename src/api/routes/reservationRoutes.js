@@ -77,8 +77,6 @@ function setupReservationRoutes(reservationController) {
    *     summary: Crear una nueva reserva
    *     description: Crea una reserva de un espacio para un rango de tiempo.
    *     tags: [Reservations]
-   *     security:
-   *       - bearerAuth: []
    *     requestBody:
    *       required: true
    *       content:
@@ -110,8 +108,6 @@ function setupReservationRoutes(reservationController) {
    *   get:
    *     summary: Obtener todas las reservas 
    *     tags: [Reservations]
-   *     security:
-   *       - bearerAuth: []
    *     responses:
    *       200:
    *         description: Lista de reservas obtenida exitosamente
@@ -126,8 +122,6 @@ function setupReservationRoutes(reservationController) {
    *   get:
    *     summary: Obtener todas las reservas vivas
    *     tags: [Reservations]
-   *     security:
-   *       - bearerAuth: []
    *     responses:
    *       200:
    *         description: Lista de reservas vivas obtenida exitosamente
@@ -142,8 +136,6 @@ function setupReservationRoutes(reservationController) {
    *   get:
    *     summary: Obtener reserva por id
    *     tags: [Reservations]
-   *     security:
-   *       - bearerAuth: []
    *     parameters:
    *       - in: path
    *         name: id
@@ -170,8 +162,6 @@ function setupReservationRoutes(reservationController) {
    *     summary: Elimina una reserva
    *     description: Elimina una reserva existente según su identificador
    *     tags: [Reservations]
-   *     security:
-   *       - bearerAuth: []
    *     parameters:
    *       - in: path
    *         name: id
@@ -197,8 +187,6 @@ function setupReservationRoutes(reservationController) {
    *   get:
    *     summary: Obtener todas las reservas de un usuario
    *     tags: [Reservations]
-   *     security:
-   *       - bearerAuth: []
    *     parameters:
    *       - in: path
    *         name: userId
@@ -222,8 +210,6 @@ function setupReservationRoutes(reservationController) {
    *   put:
    *     summary: Actualizar una reserva existente
    *     tags: [Reservations]
-   *     security:
-   *       - bearerAuth: []
    *     parameters:
    *       - in: path
    *         name: id
@@ -265,8 +251,6 @@ function setupReservationRoutes(reservationController) {
    *   put:
    *     summary: Invalidar una reserva existente
    *     tags: [Reservations]
-   *     security:
-   *       - bearerAuth: []
    *     parameters:
    *       - in: path
    *         name: id

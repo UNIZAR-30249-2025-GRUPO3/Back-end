@@ -43,7 +43,7 @@ class SpaceRepository {
       throw new Error('Método no implementado');
     }
 
-    async findByDepartment(department) {
+    async findByMinCapacity(minOccupants) {
       throw new Error('Método no implementado');
     }
 }

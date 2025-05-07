@@ -17,10 +17,41 @@ class SpaceController {
   }
 
   async updateSpace(req, res) {
+    const allowedUpdateFields = [
+      'reservationCategory',
+      'assignmentTarget',
+      'maxUsagePercentage',
+      'customSchedule',
+      'isReservable'
+      ];
+
+    const requestedFields = Object.keys(req.body);
+    const invalidFields = requestedFields.filter(field => !allowedUpdateFields.includes(field));
+    
+    if (invalidFields.length > 0) {
+      return res.status(400).json({
+        error: `No se permite actualizar los siguientes campos: ${invalidFields.join(', ')}. Los campos permitidos son: ${allowedUpdateFields.join(', ')}`
+      });
+    }
+
+    const filteredUpdateFields = {};
+    for (const field of allowedUpdateFields) {
+      if (req.body.hasOwnProperty(field)) {
+        filteredUpdateFields[field] = req.body[field];
+      }
+    }
+
+    if (Object.keys(filteredUpdateFields).length === 0) {
+      return res.status(400).json({
+        error: 'No se proporcionaron campos válidos para actualizar. Los campos permitidos son: reservationCategory, assignmentTarget, maxUsagePercentage, customSchedule, isReservable, y spaceType.'
+      });
+    }
+
     const data = {
       id: req.params.id,
-      updateFields: req.body
+      updateFields: filteredUpdateFields
     };
+    
     await this.sendMessage('updateSpace', data, res);
   }
 
@@ -40,8 +71,8 @@ class SpaceController {
     await this.sendMessage('findSpacesByCategory', { category: req.params.category }, res);
   }
 
-  async findSpacesByDepartment(req, res) {
-    await this.sendMessage('findSpacesByDepartment', { department: req.params.department }, res);
+  async findSpacesByMinOccupants(req, res) {
+    await this.sendMessage('findSpacesByMinOccupants', { minOccupants: parseInt(req.params.minOccupants) }, res);
   }
 
   async sendMessage(operation, data, res) {

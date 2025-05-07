@@ -21,6 +21,15 @@ class SpaceService {
 
     this.messageBroker = messageBroker; // Guarda la instancia
     
+    // Lista de campos permitidos para actualización
+    this.allowedUpdateFields = [
+      'reservationCategory',
+      'assignmentTarget',
+      'maxUsagePercentage', 
+      'customSchedule',
+      'isReservable'
+    ];
+    
     // Inicialización de consumidores de mensajes
     this.setupConsumers().catch(err => {
       console.error('Error al iniciar consumidor:', err);
@@ -63,8 +72,8 @@ class SpaceService {
             case 'findSpacesByCategory':
               result = await this.handleFindSpacesByCategory(message.data);
               break;
-            case 'findSpacesByDepartment':
-              result = await this.handleFindSpacesByDepartment(message.data);
+            case 'findSpacesByMinOccupants':
+              result = await this.handleFindSpacesByMinOccupants(message.data);
               break;
             default:
               throw new Error(`Operación no soportada: ${message.operation}`);
@@ -294,6 +303,14 @@ class SpaceService {
     if (!spaceData.updateFields || Object.keys(spaceData.updateFields).length === 0) {
       throw new Error('Se requieren campos para actualizar');
     }
+    
+    // Valida que no se estén intentando actualizar campos no permitidos
+    const attemptedFields = Object.keys(spaceData.updateFields);
+    const invalidFields = attemptedFields.filter(field => !this.allowedUpdateFields.includes(field));
+    
+    if (invalidFields.length > 0) {
+      throw new Error(`No se permite actualizar los siguientes campos: ${invalidFields.join(', ')}. Los campos permitidos son: ${this.allowedUpdateFields.join(', ')}`);
+    }
   
     console.log(`[SpaceService] Iniciando actualización para ID: ${spaceData.id}`);
     console.log('[DEBUG] Campos a actualizar:', spaceData.updateFields);
@@ -313,12 +330,13 @@ class SpaceService {
       const normalizedUpdateFields = {
         ...spaceData.updateFields,
         spaceType: spaceData.updateFields.spaceType?.name || spaceObj.spaceType?.name || spaceObj.spaceType,
-        reservationCategory: spaceData.updateFields.reservationCategory?.name || spaceData.updateFields.reservationCategory
+        reservationCategory: spaceData.updateFields.reservationCategory?.name || spaceData.updateFields.reservationCategory || spaceObj.reservationCategory?.name
+        || spaceObj.reservationCategory,
       };
 
       const updatedData = {
         ...spaceObj,
-        ...normalizedUpdateFields // ¡Esto sobrescribe los campos correctamente!
+        ...normalizedUpdateFields // Esto sobrescribe solo los campos permitidos
       };
     
       // Se completa la información del edificio para cada espacio si es necesario
@@ -483,24 +501,41 @@ class SpaceService {
     }
   }
 
-  // =============================================
-  // CASO DE USO: Buscar espacios por departamento
-  // =============================================
-  async handleFindSpacesByDepartment(searchData) {
+  // ==============================================
+  // CASO DE USO: Buscar espacios por ocupantes mínimos
+  // ==============================================
+  async handleFindSpacesByMinOccupants(searchData) {
 
-    if (!searchData || !searchData.department) {
-      throw new Error('Se requiere especificar un departamento');
+    if (!searchData || searchData.minOccupants === undefined) {
+      throw new Error('Se requiere especificar un número mínimo de ocupantes');
     }
 
-    console.log(`[SpaceService] Buscando espacios asignados al departamento: ${searchData.department}`);
+    // Aseguramos que sea un número
+    const minOccupants = parseInt(searchData.minOccupants, 10);
+    if (isNaN(minOccupants) || minOccupants <= 0) {
+      throw new Error('El número mínimo de ocupantes debe ser un número positivo');
+    }
+
+    console.log(`[SpaceService] Buscando espacios con capacidad para al menos: ${minOccupants} ocupantes`);
 
     try {
-      const spaces = await this.spaceRepository.findByDepartment(searchData.department);
+      let spaces = await this.spaceRepository.findByMinCapacity(minOccupants);
       
       // Se obtiene la información del edificio para completar valores nulos
       const buildingInfo = await this.buildingService.handleGetBuildingInfo();
       
       // Se completa la información del edificio para cada espacio
+      spaces = spaces.filter(space => {
+
+        if (space.maxUsagePercentage !== null) {
+          return true;
+        }
+        
+        const buildingPercentage = buildingInfo.occupancyPercentage || 100;
+        const adjustedCapacity = Math.floor((space.capacity * buildingPercentage) / 100);
+        return adjustedCapacity >= minOccupants;
+      });
+      
       for (const space of spaces) {
         if (space.maxUsagePercentage === null) {
           space.maxUsagePercentage = buildingInfo.occupancyPercentage;
@@ -511,11 +546,11 @@ class SpaceService {
         }
       }
 
-      console.log(`[SpaceService] Espacios encontrados para departamento ${searchData.department}: ${spaces.length}`);
+      console.log(`[SpaceService] Espacios encontrados con capacidad para al menos ${minOccupants} ocupantes: ${spaces.length}`);
       return spaces;
     } catch (error) {
-      console.error('[ERROR] Error al buscar espacios por departamento:', error);
-      throw new Error(`Error al buscar espacios por departamento: ${error.message}`);
+      console.error('[ERROR] Error al buscar espacios por ocupantes mínimos:', error);
+      throw new Error(`Error al buscar espacios por ocupantes mínimos: ${error.message}`);
     }
   }
 }

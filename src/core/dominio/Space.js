@@ -20,8 +20,6 @@ const validReservationCategoriesPerSpaceType = {
  */
 class Space {
 
-    // ES PROBABLE QUE SEA NECESARIO VALIDAR EL CAMPO isReservable (tabla) *********************************************************
-
     constructor(id, name, floor, capacity, spaceType, isReservable, reservationCategory, 
                 assignmentTarget, maxUsagePercentage, customSchedule, idSpace) {
         

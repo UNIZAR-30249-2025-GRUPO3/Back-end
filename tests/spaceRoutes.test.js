@@ -52,9 +52,6 @@ describe('🔹 SpaceRoutes', () => {
                 { id: 'space123', name: 'Aula 1.01', reservationCategory: 'aula' },
                 { id: 'space456', name: 'Aula 2.01', reservationCategory: 'aula' }
             ])),
-            findSpacesByDepartment: jest.fn((req, res) => res.status(200).json([
-                { id: 'space123', name: 'Despacho 3.01', assignmentTarget: { type: 'department', targets: ['informática e ingeniería de sistemas'] } }
-            ])),
         };
 
         app = express();
@@ -163,19 +160,6 @@ describe('🔹 SpaceRoutes', () => {
             expect(mockSpaceController.findSpacesByCategory).toHaveBeenCalled();
             expect(Array.isArray(response.body)).toBe(true);
             expect(response.body[0].reservationCategory).toBe('aula');
-        });
-    });
-
-    describe('📌 GET /department/:department', () => {
-        it('Se llama al método del controlador findSpacesByDepartment', async () => {
-            const department = 'informática e ingeniería de sistemas';
-            const response = await request(app).get(`/api/spaces/department/${encodeURIComponent(department)}`);
-
-            expect(response.status).toBe(200);
-            expect(mockSpaceController.findSpacesByDepartment).toHaveBeenCalled();
-            expect(Array.isArray(response.body)).toBe(true);
-            expect(response.body[0].assignmentTarget.type).toBe('department');
-            expect(response.body[0].assignmentTarget.targets).toContain(department);
         });
     });
 });

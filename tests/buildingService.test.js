@@ -33,8 +33,8 @@ describe('🔹 BuildingService', () => {
                 floors: 4,
                 occupancyPercentage: 100,
                 openingHours: {
-                    weekdays: { open: '08:00', close: '21:00' },
-                    saturday: { open: '09:00', close: '14:00' },
+                    weekdays: { open: '08:00', close: '21:30' },
+                    saturday: { open: null, close: null },
                     sunday: { open: null, close: null }
                 }
             });
@@ -57,8 +57,8 @@ describe('🔹 BuildingService', () => {
             
             expect(result).toEqual({
                 openingHours: {
-                    weekdays: { open: '08:00', close: '21:00' },
-                    saturday: { open: '09:00', close: '14:00' },
+                    weekdays: { open: '08:00', close: '21:30' },
+                    saturday: { open: null, close: null },
                     sunday: { open: null, close: null }
                 }
             });
@@ -136,7 +136,7 @@ describe('🔹 BuildingService', () => {
                 success: true,
                 openingHours: {
                     weekdays: { open: '07:00', close: '20:00' },
-                    saturday: { open: '09:00', close: '14:00' },
+                    saturday: { open: null, close: null },
                     sunday: { open: null, close: null }
                 }
             });
@@ -154,11 +154,11 @@ describe('🔹 BuildingService', () => {
             
             expect(buildingService.building._openingHours.weekdays).toEqual({
                 open: '07:30',
-                close: '21:00'
+                close: '21:30'
             });
             
             const updateCloseOnly = {
-                day: 'saturday',
+                day: 'weekdays',
                 hours: {
                     close: '15:30'
                 }
@@ -166,8 +166,8 @@ describe('🔹 BuildingService', () => {
             
             result = await buildingService.handleUpdateOpeningHours(updateCloseOnly);
             
-            expect(buildingService.building._openingHours.saturday).toEqual({
-                open: '09:00',
+            expect(buildingService.building._openingHours.weekdays).toEqual({
+                open: '07:30',
                 close: '15:30'
             });
         });
