@@ -81,8 +81,10 @@ class MessageBroker {
   }
 
   async removeConsumer(queue) {
+    console.log(`[RabbitMQ] ConsumerTag`,queue);
+    console.log(`[RabbitMQ] ConsumerTag`,this.consumerTags);
+    await this.waitForConsumerTag(queue);
     if (this.consumerTags[queue]) {
-      await this.waitForConsumerTag(queue);
       await this.channel.cancel(this.consumerTags[queue]); 
       delete this.consumerTags[queue];
       console.log(`[RabbitMQ] Consumidor en ${queue} eliminado`);
