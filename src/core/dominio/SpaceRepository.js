@@ -6,10 +6,6 @@
  * - Permite intercambiar implementaciones sin afectar al dominio
  */
 class SpaceRepository {
-
-    async findById(id) {
-      throw new Error('Método no implementado');
-    }
   
     async save(space) {
       throw new Error('Método no implementado');
@@ -27,11 +23,7 @@ class SpaceRepository {
       throw new Error('Método no implementado');
     }
 
-    async findByFilters(criteria) {
-      throw new Error('Método no implementado');
-    }
-
-    async findAvailableSpaces(dateTime, duration, minCapacity) {
+    async findById(id) {
       throw new Error('Método no implementado');
     }
 

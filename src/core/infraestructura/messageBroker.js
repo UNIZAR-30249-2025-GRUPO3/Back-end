@@ -73,8 +73,17 @@ class MessageBroker {
     this.consumerTags[queue] = consumerTag; 
   }
   
-  
+  async waitForConsumerTag(queue, retries = 5, delay = 100) {
+    while (!this.consumerTags[queue] && retries > 0) {
+      await new Promise(res => setTimeout(res, delay));
+      retries--;
+    }
+  }
+
   async removeConsumer(queue) {
+    console.log(`[RabbitMQ] ConsumerTag`,queue);
+    console.log(`[RabbitMQ] ConsumerTag`,this.consumerTags);
+    await this.waitForConsumerTag(queue);
     if (this.consumerTags[queue]) {
       await this.channel.cancel(this.consumerTags[queue]); 
       delete this.consumerTags[queue];

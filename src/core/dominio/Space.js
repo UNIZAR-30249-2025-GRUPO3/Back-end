@@ -30,6 +30,7 @@ class Space {
         // Propiedades invariables
         // =======================
         this.id = id;   // Identificador único de la entidad
+        this.idSpace = idSpace;
         this.name = name;
         this.floor = floor;
         this.capacity = capacity;
@@ -53,9 +54,6 @@ class Space {
         
         // Horario personalizado (o null si usa el del edificio)
         this.customSchedule = customSchedule || null;
-
-        // Identificador del espacio en la vida real
-        this.idSpace = idSpace;
 
         // Validación adicional de consistencia interna del agregado
         this.validateSpaceConsistency();
