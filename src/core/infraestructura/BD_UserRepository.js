@@ -25,6 +25,7 @@ class BD_UserRepository extends UserRepository {
   }
 
   async save(user) {
+    console.log('[DEBUG] User:', user);
     const res = await pool.query(`
       INSERT INTO users (name, email, password, role, department)
       VALUES ($1, $2, $3, $4, $5)
@@ -34,13 +35,14 @@ class BD_UserRepository extends UserRepository {
       user.email,
       user.password,
       user.role,
-      user.department ? user.department.name : null
+      user.department || null
     ]);
 
     return UserFactory.createFromData(res.rows[0]);
   }
 
   async update(user) {
+    console.log('[DEBUG] User:', user);
     const res = await pool.query(`
       UPDATE users
       SET name = $1, email = $2, password = $3, role = $4, department = $5
@@ -51,7 +53,7 @@ class BD_UserRepository extends UserRepository {
       user.email,
       user.password,
       user.role,
-      user.department ? user.department.name : null,
+      user.department || null,
       user.id
     ]);
 

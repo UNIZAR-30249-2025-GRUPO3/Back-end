@@ -26,8 +26,7 @@ class Reservation {
         this.additionalDetails = additionalDetails;
         this.endTime = new Date(this.startTime.getTime() + this.duration * 60000);
         console.log("Categoría recibida:", category, typeof category);
-        this.categoryy = new ReservationCategory(category);
-        this.category = category;
+        this.category = new ReservationCategory(category);
         this.status = status;
     }
 
