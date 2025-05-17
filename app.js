@@ -59,7 +59,14 @@ app.use(cors({
 
 app.use(sessions({
   cookieName: 'session',
-  secret: 'secret'
+  secret: 'secret',
+  duration: 24 * 60 * 60 * 1000,
+  activeDuration: 1000 * 60 * 5,
+  cookie: {
+    httpOnly: true,
+    secure: false,
+    sameSite: 'lax'
+  }
 }));
 
 app.use(logger('dev'));
