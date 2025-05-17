@@ -2,7 +2,6 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
-const sessions = require('client-sessions');
 
 // Repositorios
 const BD_UserRepository = require('./src/core/infraestructura/BD_UserRepository');
@@ -47,11 +46,6 @@ const spaceController = new SpaceController();
 const reservationController = new ReservationController();
 
 var app = express();
-
-app.use(sessions({
-  cookieName: 'session',
-  secret: 'secret'
-}));
 
 app.use(logger('dev'));
 app.use(express.json());

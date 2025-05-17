@@ -1,5 +1,3 @@
-// buildingRoutes.js
-
 const express = require('express');
 const { isAuthenticated, gerenteAuthorized } = require('../middleware/authMiddleware');
 
@@ -13,6 +11,11 @@ const { isAuthenticated, gerenteAuthorized } = require('../middleware/authMiddle
 /**
  * @swagger
  * components:
+ *   securitySchemes:
+ *     bearerAuth:
+ *       type: http
+ *       scheme: bearer
+ *       bearerFormat: JWT
  *   schemas:
  *     BuildingInfo:
  *       type: object
@@ -153,6 +156,8 @@ function setupBuildingRoutes(buildingController) {
    *     summary: Actualizar el porcentaje de ocupación del edificio
    *     description: Actualiza el porcentaje máximo de ocupación permitido en el edificio Ada Byron. Requiere autenticación y rol de gerente.
    *     tags: [Building]
+   *     security:
+   *       - bearerAuth: []
    *     requestBody:
    *       required: true
    *       content:
@@ -178,9 +183,9 @@ function setupBuildingRoutes(buildingController) {
    *       400:
    *         description: Error en la solicitud (porcentaje inválido)
    *       401:
-   *         description: No se ha iniciado sesión
+   *         description: No autenticado o token inválido
    *       403:
-   *         description: No tienes permisos para realizar esta acción
+   *         description: No autorizado (requiere rol de gerente)
    *       500:
    *         description: Error en el servidor
    */
@@ -195,6 +200,8 @@ function setupBuildingRoutes(buildingController) {
    *     summary: Actualizar los horarios de apertura del edificio
    *     description: Actualiza los horarios de apertura del edificio Ada Byron para un día específico. Requiere autenticación y rol de gerente.
    *     tags: [Building]
+   *     security:
+   *       - bearerAuth: []
    *     requestBody:
    *       required: true
    *       content:
@@ -239,9 +246,9 @@ function setupBuildingRoutes(buildingController) {
    *       400:
    *         description: Error en la solicitud (día o formato de hora inválido)
    *       401:
-   *         description: No se ha iniciado sesión
+   *         description: No autenticado o token inválido
    *       403:
-   *         description: No tienes permisos para realizar esta acción
+   *         description: No autorizado (requiere rol de gerente)
    *       500:
    *         description: Error en el servidor
    */

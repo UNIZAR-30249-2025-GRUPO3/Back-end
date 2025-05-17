@@ -65,6 +65,8 @@ function setupUserRoutes(userController) {
  *     summary: Crear un nuevo usuario
  *     description: Crea un usuario y lo almacena en la base de datos. Requiere autenticación y rol de gerente.
  *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -91,6 +93,10 @@ function setupUserRoutes(userController) {
  *               department: ""
  *       400:
  *         description: Error en la solicitud (correo ya en uso o datos inválidos)
+ *       401:
+ *         description: No autenticado o token inválido
+ *       403:
+ *         description: No autorizado (no es gerente)
  */
   router.post('/', isAuthenticated, gerenteAuthorized, (req, res) => userController.createUser(req, res));
 
@@ -101,6 +107,8 @@ function setupUserRoutes(userController) {
  *     summary: Obtener información de un usuario por ID
  *     description: Recupera los datos de un usuario existente usando su ID. Requiere autenticación y rol de gerente.
  *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -123,6 +131,10 @@ function setupUserRoutes(userController) {
  *               department: null
  *       400:
  *         description: Error en la solicitud (ID inválido o usuario no encontrado)
+ *       401:
+ *         description: No autenticado o token inválido
+ *       403:
+ *         description: No autorizado (no es gerente)
  *       404:
  *         description: Usuario no encontrado
  *       500:
@@ -137,6 +149,8 @@ function setupUserRoutes(userController) {
  *     summary: Actualizar información de un usuario por ID.
  *     description: Actualiza los datos de un usuario existente usando su ID. Solo se actualizan los campos proporcionados en el cuerpo de la solicitud. Requiere autenticación y rol de gerente.
  *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -172,7 +186,7 @@ function setupUserRoutes(userController) {
  *       400:
  *         description: Error en la solicitud (campos inválidos o datos inconsistentes)
  *       401:
- *         description: No se ha iniciado sesión
+ *         description: No autenticado o token inválido
  *       403:
  *         description: No tienes permisos para realizar esta acción
  *       404:
@@ -189,6 +203,8 @@ function setupUserRoutes(userController) {
  *     summary: Eliminar un usuario por ID.
  *     description: Elimina un usuario de la base de datos usando su ID. Requiere autenticación y rol de gerente.
  *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -208,7 +224,7 @@ function setupUserRoutes(userController) {
  *       400:
  *         description: Error en la solicitud (ID no válido)
  *       401:
- *         description: No se ha iniciado sesión
+ *         description: No autenticado o token inválido
  *       403:
  *         description: No tienes permisos para realizar esta acción
  *       404:
@@ -225,6 +241,8 @@ function setupUserRoutes(userController) {
  *     summary: Obtener todos los usuarios
  *     description: Devuelve una lista de todos los usuarios registrados. Requiere autenticación y rol de gerente.
  *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: Lista de usuarios obtenida exitosamente
@@ -241,8 +259,10 @@ function setupUserRoutes(userController) {
  *                 email: "jane@example.com"
  *                 role: ["docente-investigador"]
  *                 department: "ingeniería electrónica y comunicaciones"
- *       400:
- *         description: Error en la solicitud
+ *       401:
+ *         description: No autenticado o token inválido
+ *       403:
+ *         description: No autorizado (no es gerente)
  *       500:
  *         description: Error en el servidor
  */

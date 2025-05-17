@@ -65,6 +65,11 @@ const { isAuthenticated } = require('../middleware/authMiddleware');
  *         status:
  *           type: string
  *           description: Estado actual de la reserva (por defecto 'valid')
+ *   securitySchemes:
+ *     bearerAuth:
+ *       type: http
+ *       scheme: bearer
+ *       bearerFormat: JWT
  */
 
 function setupReservationRoutes(reservationController) {
@@ -77,6 +82,8 @@ function setupReservationRoutes(reservationController) {
    *     summary: Crear una nueva reserva
    *     description: Crea una reserva de un espacio para un rango de tiempo.
    *     tags: [Reservations]
+   *     security:
+   *       - bearerAuth: []
    *     requestBody:
    *       required: true
    *       content:
@@ -98,7 +105,7 @@ function setupReservationRoutes(reservationController) {
    *       400:
    *         description: Datos inválidos o espacio no disponible
    *       401:
-   *         description: No autenticado
+   *         description: No autenticado o token inválido
    */
   router.post('/', isAuthenticated, (req, res) => reservationController.createReservation(req, res));
 
@@ -108,25 +115,29 @@ function setupReservationRoutes(reservationController) {
    *   get:
    *     summary: Obtener todas las reservas 
    *     tags: [Reservations]
+   *     security:
+   *       - bearerAuth: []
    *     responses:
    *       200:
    *         description: Lista de reservas obtenida exitosamente
    *       401:
-   *         description: No autenticado
+   *         description: No autenticado o token inválido
    */
   router.get('/', isAuthenticated, (req, res) => reservationController.getAllReservation(req, res));
 
-      /**
+  /**
    * @swagger
    * /api/reservations/alive:
    *   get:
    *     summary: Obtener todas las reservas vivas
    *     tags: [Reservations]
+   *     security:
+   *       - bearerAuth: []
    *     responses:
    *       200:
    *         description: Lista de reservas vivas obtenida exitosamente
    *       401:
-   *         description: No autenticado
+   *         description: No autenticado o token inválido
    */
   router.get('/alive', isAuthenticated, (req, res) => reservationController.getAliveReservations(req, res));
 
@@ -136,6 +147,8 @@ function setupReservationRoutes(reservationController) {
    *   get:
    *     summary: Obtener reserva por id
    *     tags: [Reservations]
+   *     security:
+   *       - bearerAuth: []
    *     parameters:
    *       - in: path
    *         name: id
@@ -147,13 +160,13 @@ function setupReservationRoutes(reservationController) {
    *       200:
    *         description: Reserva obtenida correctamente
    *       401:
-   *         description: No autenticado
+   *         description: No autenticado o token inválido
    *       403:
    *         description: No autorizado para cancelar esta reserva
    *       404:
    *         description: Reserva no encontrada
    */
-    router.get('/:id', isAuthenticated, (req, res) => reservationController.getReservationById(req, res));
+  router.get('/:id', isAuthenticated, (req, res) => reservationController.getReservationById(req, res));
 
   /**
    * @swagger
@@ -162,6 +175,8 @@ function setupReservationRoutes(reservationController) {
    *     summary: Elimina una reserva
    *     description: Elimina una reserva existente según su identificador
    *     tags: [Reservations]
+   *     security:
+   *       - bearerAuth: []
    *     parameters:
    *       - in: path
    *         name: id
@@ -173,7 +188,7 @@ function setupReservationRoutes(reservationController) {
    *       200:
    *         description: Reserva elimnada exitosamente
    *       401:
-   *         description: No autenticado
+   *         description: No autenticado o token inválido
    *       403:
    *         description: No autorizado para eliminar esta reserva
    *       404:
@@ -181,12 +196,14 @@ function setupReservationRoutes(reservationController) {
    */
   router.delete('/:id', isAuthenticated, (req, res) => reservationController.deleteReservation(req, res));
 
-    /**
+  /**
    * @swagger
    * /api/reservations/user/{userId}:
    *   get:
    *     summary: Obtener todas las reservas de un usuario
    *     tags: [Reservations]
+   *     security:
+   *       - bearerAuth: []
    *     parameters:
    *       - in: path
    *         name: userId
@@ -198,18 +215,20 @@ function setupReservationRoutes(reservationController) {
    *       200:
    *         description: Reservas del usuario obtenidas correctamente
    *       401:
-   *         description: No autenticado
+   *         description: No autenticado o token inválido
    *       404:
    *         description: Usuario no encontrado o sin reservas
    */
-    router.get('/user/:userId', isAuthenticated, (req, res) => reservationController.getReservationsByUser(req, res));
+  router.get('/user/:userId', isAuthenticated, (req, res) => reservationController.getReservationsByUser(req, res));
 
-    /**
+  /**
    * @swagger
    * /api/reservations/{id}:
    *   put:
    *     summary: Actualizar una reserva existente
    *     tags: [Reservations]
+   *     security:
+   *       - bearerAuth: []
    *     parameters:
    *       - in: path
    *         name: id
@@ -237,7 +256,7 @@ function setupReservationRoutes(reservationController) {
    *       400:
    *         description: Datos inválidos
    *       401:
-   *         description: No autenticado
+   *         description: No autenticado o token inválido
    *       403:
    *         description: No autorizado para actualizar esta reserva
    *       404:
@@ -245,12 +264,14 @@ function setupReservationRoutes(reservationController) {
    */
   router.put('/:id', isAuthenticated, (req, res) => reservationController.validateReservation(req, res));
 
-    /**
+  /**
    * @swagger
    * /api/reservations/invalidate/{id}:
    *   put:
    *     summary: Invalidar una reserva existente
    *     tags: [Reservations]
+   *     security:
+   *       - bearerAuth: []
    *     parameters:
    *       - in: path
    *         name: id
@@ -264,7 +285,7 @@ function setupReservationRoutes(reservationController) {
    *       400:
    *         description: Datos inválidos
    *       401:
-   *         description: No autenticado
+   *         description: No autenticado o token inválido
    *       403:
    *         description: No autorizado para invalidar esta reserva
    *       404:

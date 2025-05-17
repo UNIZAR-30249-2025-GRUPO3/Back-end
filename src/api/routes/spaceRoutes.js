@@ -9,6 +9,11 @@ const express = require('express');
 /**
  * @swagger
  * components:
+ *   securitySchemes:
+ *     bearerAuth:
+ *       type: http
+ *       scheme: bearer
+ *       bearerFormat: JWT
  *   schemas:
  *     SpaceType:
  *       type: string
@@ -150,6 +155,8 @@ function setupSpaceRoutes(spaceController) {
    *     summary: Actualizar información limitada de un espacio por ID
    *     description: Actualiza solo campos específicos permitidos de un espacio existente. Requiere autenticación y rol de gerente.
    *     tags: [Spaces]
+   *     security:
+   *       - bearerAuth: []
    *     parameters:
    *       - in: path
    *         name: id
@@ -241,7 +248,7 @@ function setupSpaceRoutes(spaceController) {
    *       400:
    *         description: Error en la solicitud (campos inválidos o no permitidos)
    *       401:
-   *         description: No autenticado
+   *         description: No autenticado o token inválido
    *       403:
    *         description: No autorizado (requiere rol de gerente)
    *       404:

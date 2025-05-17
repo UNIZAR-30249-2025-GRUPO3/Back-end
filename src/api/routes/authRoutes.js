@@ -7,6 +7,16 @@ const express = require('express');
  *   description: Endpoints para autenticación de usuarios
  */
 
+/**
+ * @swagger
+ * components:
+ *   securitySchemes:
+ *     bearerAuth:
+ *       type: http
+ *       scheme: bearer
+ *       bearerFormat: JWT
+ */
+
 function setupAuthRoutes(authController) {
   const router = express.Router();
 
@@ -15,7 +25,7 @@ function setupAuthRoutes(authController) {
    * /api/auth/login:
    *   post:
    *     summary: Iniciar sesión de un usuario
-   *     description: Permite a un usuario iniciar sesión proporcionando su email y contraseña.
+   *     description: Permite a un usuario iniciar sesión proporcionando su email y contraseña. Devuelve un token JWT.
    *     tags: [Auth]
    *     requestBody:
    *       required: true
@@ -37,11 +47,12 @@ function setupAuthRoutes(authController) {
    *             password: "securepassword"
    *     responses:
    *       200:
-   *         description: Login exitoso, establece sesión de usuario
+   *         description: Login exitoso, devuelve token JWT
    *         content:
    *           application/json:
    *             example:
    *               message: "OK"
+   *               token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
    *               user:
    *                 user_id: "12345"
    *                 role: ["gerente"]
@@ -51,25 +62,6 @@ function setupAuthRoutes(authController) {
    *         description: Error en el servidor
    */
   router.post('/login', (req, res) => authController.login(req, res));
-
-  /**
-   * @swagger
-   * /api/auth/logout:
-   *   get:
-   *     summary: Cerrar sesión del usuario
-   *     description: Cierra la sesión actual del usuario eliminando sus datos de sesión. Importante hacer logout antes de cerrar el swagger porque aunque se reinicie la base de datos la cookie se guarda en el navegador.
-   *     tags: [Auth]
-   *     responses:
-   *       200:
-   *         description: Sesión cerrada exitosamente
-   *         content:
-   *           application/json:
-   *             example:
-   *               message: "Closed session"
-   *       500:
-   *         description: Error al cerrar la sesión
-   */
-  router.get('/logout', (req, res) => authController.logout(req, res));
 
   return router;
 }
