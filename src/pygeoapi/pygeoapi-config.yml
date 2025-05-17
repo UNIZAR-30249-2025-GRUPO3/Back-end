@@ -94,11 +94,11 @@ resources:
       - type: feature
         name: PostgreSQL
         data:
-          host: dpg-cvukgh95pdvs73c5nkng-a.frankfurt-postgres.render.com
+          host: dpg-d0k67i3e5dus73bgdq50-a.frankfurt-postgres.render.com
           port: 5432
-          dbname: laboratoriosoft
+          dbname: laboratoriosoftware
           user: laboratoriosoft_user
-          password: 9SA3aakFKS1ePkUiPLQzKD286bL0hRvU
+          password: PFy5jAhxVfAkn6FzWHJAHvTEF6VrbROh
           connect_timeout: 10
         id_field: idSpace
         table: spaces
