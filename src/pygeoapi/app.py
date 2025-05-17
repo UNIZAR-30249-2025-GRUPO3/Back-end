@@ -10,5 +10,7 @@ if config_path and os.path.exists(config_path):
         config = yaml.safe_load(f)
     if config.get('server', {}).get('cors', False):
         CORS(APP)
+        # Para el futuro para permitir solo nuestro frontend
+        # CORS(APP, resources={r"/*": {"origins": "https://..."}})
 
 app = APP
