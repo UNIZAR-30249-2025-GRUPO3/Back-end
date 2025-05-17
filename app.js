@@ -57,23 +57,9 @@ app.use(cors({
   credentials: true
 }));
 
-app.set('trust proxy', 1);
-
-app.use((req, res, next) => {
-  req.connection.proxySecure = true;
-  next();
-});
-
 app.use(sessions({
   cookieName: 'session',
-  secret: 'secret',
-  duration: 24 * 60 * 60 * 1000,
-  activeDuration: 1000 * 60 * 5,
-  cookie: {
-    httpOnly: true,
-    sameSite: 'lax',
-    secure: false
-  }
+  secret: 'secret'
 }));
 
 app.use(logger('dev'));
