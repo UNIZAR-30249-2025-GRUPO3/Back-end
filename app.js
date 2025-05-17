@@ -64,8 +64,9 @@ app.use(sessions({
   activeDuration: 1000 * 60 * 5,
   cookie: {
     httpOnly: true,
-    secure: false,
-    sameSite: 'lax'
+    // Esto solo funciona en producción
+    sameSite: 'none',
+    secure: true
   }
 }));
 
