@@ -81,7 +81,7 @@ function setupSpaceRoutes(spaceController) {
   const router = express.Router();
 
   /**
-   * @swagger
+   * 
    * /api/spaces:
    *   post:
    *     summary: Crear un nuevo espacio
@@ -116,7 +116,8 @@ function setupSpaceRoutes(spaceController) {
    *       403:
    *         description: No autorizado (requiere rol de gerente)
    */
-  router.post('/', isAuthenticated, gerenteAuthorized, (req, res) => spaceController.createSpace(req, res));
+  // NO SE PERMITER CREAR NUEVOS ESPACIOS - ESTOS YA ESTAN PRECARGADOS EN EL SISTEMA
+  // router.post('/', isAuthenticated, gerenteAuthorized, (req, res) => spaceController.createSpace(req, res));
 
   /**
    * @swagger
@@ -249,7 +250,7 @@ function setupSpaceRoutes(spaceController) {
   router.put('/:id', isAuthenticated, gerenteAuthorized, (req, res) => spaceController.updateSpace(req, res));
 
   /**
-   * @swagger
+   *
    * /api/spaces/{id}:
    *   delete:
    *     summary: Eliminar un espacio por ID
@@ -274,7 +275,8 @@ function setupSpaceRoutes(spaceController) {
    *       404:
    *         description: Espacio no encontrado
    */
-  router.delete('/:id', isAuthenticated, gerenteAuthorized, (req, res) => spaceController.deleteSpace(req, res));
+  // NO SE PERMITEN ELIMINAR LOS ESPACIOS DEL SISTEMA - ESTOS SON UNOS FIJOS YA PRECARGADOS
+  // router.delete('/:id', isAuthenticated, gerenteAuthorized, (req, res) => spaceController.deleteSpace(req, res));
 
   /**
    * @swagger
