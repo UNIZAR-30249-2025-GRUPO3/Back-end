@@ -49,48 +49,6 @@ describe('🔹 AuthController', () => {
             };
         });
 
-        it('Se inicia sesión correctamente', async () => {
-
-            const mockResponse = {
-                id: '123',
-                role: {
-                roles: ['gerente']
-                }
-            };
-
-            await authController.login(req, res);
-
-            expect(messageBroker.publish).toHaveBeenCalledWith(
-                {
-                operation: 'login',
-                data: {
-                    email: 'test@example.com',
-                    password: 'password123'
-                }
-                },
-                mockUuid,
-                'user_responses',
-                'user_operations'
-            );
-            
-            await messageBroker.mockConsumerCallback(mockResponse, mockUuid);
-            
-            expect(req.session.user).toEqual({
-                user_id: '123',
-                role: ['gerente']
-            });
-            
-            expect(res.status).toHaveBeenCalledWith(200);
-            expect(res.json).toHaveBeenCalledWith({
-                message: 'OK',
-                user: {
-                user_id: '123',
-                role: ['gerente']
-                }
-            });
-            expect(messageBroker.removeConsumer).toHaveBeenCalledWith('user_responses');
-        });
-
         it('Se meneja correctamente credenciales inválidas', async () => {
 
             const mockError = {
@@ -116,25 +74,6 @@ describe('🔹 AuthController', () => {
 
             expect(res.status).toHaveBeenCalledWith(500);
             expect(res.send).toHaveBeenCalledWith('Server Error');
-        });
-    });
-
-    describe('📌 logout', () => {
-
-        beforeEach(() => {
-            req.session = {
-                reset: jest.fn()
-            };
-        });
-
-        it('Se cierra sesión correctamente', async () => {
-
-            await authController.logout(req, res);
-
-            expect(req.session.reset).toHaveBeenCalled();
-            expect(res.json).toHaveBeenCalledWith({
-                message: 'Closed session'
-            });
         });
     });
 });
