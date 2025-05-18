@@ -339,17 +339,6 @@ class SpaceService {
         ...normalizedUpdateFields // Esto sobrescribe solo los campos permitidos
       };
     
-      // Se completa la información del edificio para cada espacio si es necesario
-      if (updatedData.maxUsagePercentage === null) {
-        const buildingInfo = await this.buildingService.handleGetOccupancyPercentage();
-        updatedData.maxUsagePercentage = buildingInfo.occupancyPercentage;
-      }
-      
-      if (updatedData.customSchedule === null) {
-        const buildingHours = await this.buildingService.handleGetOpeningHours();
-        updatedData.customSchedule = buildingHours.openingHours;
-      }
-      
       // Se valida la asignación de usuarios si se está actualizando y el tipo es 'person'
       if (spaceData.updateFields.assignmentTarget) {
         const assignmentTarget = spaceData.updateFields.assignmentTarget;
@@ -367,15 +356,30 @@ class SpaceService {
         }
       }
 
+      // Crear una copia temporal con valores de edificio para validación
+      const tempDataForValidation = {...updatedData};
+      
+      // Completar temporalmente los valores null con los del edificio para validación
+      if (tempDataForValidation.maxUsagePercentage === null) {
+        const buildingInfo = await this.buildingService.handleGetOccupancyPercentage();
+        tempDataForValidation.maxUsagePercentage = buildingInfo.occupancyPercentage;
+      }
+      
+      if (tempDataForValidation.customSchedule === null) {
+        const buildingHours = await this.buildingService.handleGetOpeningHours();
+        tempDataForValidation.customSchedule = buildingHours.openingHours;
+      }
+
       // Validación del dominio mediante factoría
       try {
-        console.log('[DEBUG] updated:', updatedData);
-        SpaceFactory.createFromData(updatedData);
+        console.log('[DEBUG] Validando con temporales:', tempDataForValidation);
+        SpaceFactory.createFromData(tempDataForValidation);
       } catch (error) {
         throw new Error(error.message);
       }
 
       // Persistencia mediante repositorio
+      console.log('[DEBUG] Guardando en BD (manteniendo null):', updatedData);
       const updatedSpace = await this.spaceRepository.update(updatedData);
     
       console.log(`[SpaceService] Espacio actualizado: ${updatedSpace.name}`);
