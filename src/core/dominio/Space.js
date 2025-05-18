@@ -96,19 +96,20 @@ class Space {
         // Validar coherencia entre categoría de reserva y asignación (la validación de los roles se hace en el servicio)
         if (this.reservationCategory) {
             const category = this.reservationCategory.name;
+            const spaceType = this.spaceType.name;
             const assignmentType = this.assignmentTarget.getType();
 
             if (category === "aula" || category === "sala común") {
                 if (assignmentType !== "eina") {
                     throw new Error(`Un espacio con categoría ${category} debe estar asignado a la EINA.`);
                 }
-            } else if (category === "despacho") {
+            } else if (category === "despacho" || spaceType === "despacho") {   // Tal como se ha planteado un despacho nunca tendrá categoría de reserva ya que no se puede hacer reservable
                 if (assignmentType !== "person" && assignmentType !== "department") {
                     throw new Error("Un despacho debe estar asignado a una persona o departamento.");
                 }
             } else if (category === "seminario" || category === "laboratorio") {
                 if (assignmentType !== "department" && assignmentType !== "eina") {
-                    throw new Error(`Un ${category} debe estar asignado a un departamento o a la EINA.`);
+                    throw new Error(`Un espacio con categoría ${category} debe estar asignado a un departamento o a la EINA.`);
                 }
             }
         }
