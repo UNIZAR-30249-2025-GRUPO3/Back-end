@@ -43,8 +43,8 @@ class Space {
         // =====================
         this.isReservable = isReservable;
         
-        // OBJETO VALOR: Categoría de reserva (solo si es reservable)
-        this.reservationCategory = isReservable ? new ReservationCategory(reservationCategory) : null;
+        // OBJETO VALOR: Categoría de reserva
+        this.reservationCategory = reservationCategory ? new ReservationCategory(reservationCategory) : null;
         
         // OBJETO VALOR: Asignación
         this.assignmentTarget = new AssignmentTarget(assignmentTarget.type, assignmentTarget.targets);
@@ -103,7 +103,7 @@ class Space {
                 if (assignmentType !== "eina") {
                     throw new Error(`Un espacio con categoría ${category} debe estar asignado a la EINA.`);
                 }
-            } else if (category === "despacho" || spaceType === "despacho") {   // Tal como se ha planteado un despacho nunca tendrá categoría de reserva ya que no se puede hacer reservable
+            } else if (category === "despacho") {
                 if (assignmentType !== "person" && assignmentType !== "department") {
                     throw new Error("Un despacho debe estar asignado a una persona o departamento.");
                 }
@@ -115,12 +115,12 @@ class Space {
         }
 
         // Validar que si es despacho, no sea reservable
-        if (this.reservationCategory && this.reservationCategory.name === "despacho") {
+        if (this.spaceType.name === "despacho" && this.isReservable) {
             throw new Error("Los despachos no pueden hacerse reservables.");
         }
 
         // Validar que el tipo de espacio permita la categoría de reserva
-        if (this.isReservable && this.reservationCategory) {
+        if (this.reservationCategory) {
             const spaceTypeName = this.spaceType.name;
             const reservationCategoryName = this.reservationCategory.name;
 
