@@ -47,6 +47,15 @@ const reservationController = new ReservationController();
 
 var app = express();
 
+const cors = require('cors');
+// DEMOMENTO LOCALHOST PARA DESARROLLO FRONTEND - LUEGO CAMBIAR POR EL REAL
+app.use(cors({
+  origin: ['https://pygeoapi.onrender.com', 'http://localhost:3000'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
+
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -79,19 +88,10 @@ app.use(function (err, req, res, next) {
   });
 });
 
-const PORT = process.env.PORT || 3000;
-
-const server = app.listen(PORT, () => {
-  console.log(`Servidor escuchando en http://localhost:${PORT}`);
+app.get('/openapi.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(swaggerDocs);
 });
 
-// Manejo de errores del servidor
-server.on('error', error => {
-  if (error.code === 'EADDRINUSE') {
-    console.error(`El puerto ${PORT} está en uso. Prueba con otro puerto.`);
-  } else {
-    console.error('Error al iniciar el servidor:', error);
-  }
-});
 
 module.exports = app;
