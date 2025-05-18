@@ -1,15 +1,34 @@
+const jwt = require('jsonwebtoken');
+
+const JWT_SECRET = process.env.JWT_SECRET;
+
 function isAuthenticated(req, res, next) {
-    if (req.session && req.session.user) {
-        return next();
-    } else {
+
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
         return res.status(401).json({
-            error: 'No hay sesión activa'
+            error: 'No tienes sesión activa'
+        });
+    }
+    
+    const token = authHeader.split(' ')[1];
+    
+    try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+        
+        req.user = decoded;
+        
+        next();
+    } catch (error) {
+        return res.status(401).json({
+            error: 'Token inválido o expirado'
         });
     }
 }
 
 function gerenteAuthorized(req, res, next) {
-    if (req.session.user.role.includes('gerente')) {
+    if (req.user.role.includes('gerente')) {
         return next();
     } else {
         return res.status(403).json({

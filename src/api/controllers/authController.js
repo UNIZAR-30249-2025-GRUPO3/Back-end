@@ -1,5 +1,9 @@
 const messageBroker = require('../../core/infraestructura/messageBroker');
 const { v4: uuidv4 } = require('uuid');
+const jwt = require('jsonwebtoken');
+
+const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_EXPIRY = '24h';
 
 class AuthController {
   constructor() {
@@ -25,11 +29,22 @@ class AuthController {
             if (response.error) {
               res.status(400).json({ error: response.error });
             } else {
-              req.session.user = { user_id: response.id, role: response.role.roles };
+              const token = jwt.sign(
+                { 
+                  user_id: response.id, 
+                  role: response.role.roles 
+                }, 
+                JWT_SECRET, 
+                { expiresIn: JWT_EXPIRY }
+              );
   
               res.status(200).json({
                 message: "OK",
-                user: { user_id: req.session.user.user_id, role: req.session.user.role }
+                token,
+                user: { 
+                  user_id: response.id, 
+                  role: response.role.roles 
+                }
               });
             }
           } finally {
@@ -42,15 +57,9 @@ class AuthController {
       messageBroker.consume(replyToQueue, consumer);
 
     } catch (err) {
+      console.error(err);
       res.status(500).send("Server Error");
     }
-  }
-
-  async logout(req, res) {
-    req.session.reset();
-    return res.json({
-      message: 'Closed session'
-    });
   }
 }
 

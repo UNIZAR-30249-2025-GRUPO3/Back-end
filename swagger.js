@@ -16,7 +16,16 @@ const swaggerOptions = {
             {
                 url: "https://back-end-sv3z.onrender.com"
             }
-        ],        
+        ],
+        components: {
+            securitySchemes: {
+                bearerAuth: {
+                    type: "http",
+                    scheme: "bearer",
+                    bearerFormat: "JWT"
+                }
+            }
+        }            
     },
     apis: ["./src/api/routes/*.js"],
 };

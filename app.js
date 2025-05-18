@@ -2,7 +2,6 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
-const sessions = require('client-sessions');
 
 // Repositorios
 const BD_UserRepository = require('./src/core/infraestructura/BD_UserRepository');
@@ -55,11 +54,6 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
-}));
-
-app.use(sessions({
-  cookieName: 'session',
-  secret: 'secret'
 }));
 
 app.use(logger('dev'));
