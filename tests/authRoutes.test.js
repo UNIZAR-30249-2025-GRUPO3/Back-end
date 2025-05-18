@@ -42,16 +42,4 @@ describe('🔹 AuthRoutes', () => {
             expect(response.body).toEqual({ message: 'OK' });
         });
     });
-
-    describe('📌 GET /logout', () => {
-
-        it('Se llama al método del controlador logout', async () => {
-
-            const response = await request(app).get('/api/auth/logout');
-
-            expect(response.status).toBe(200);
-            expect(mockUserController.logout).toHaveBeenCalled();
-            expect(response.body).toEqual({ message: 'Closed session' });
-        });
-    });
 });

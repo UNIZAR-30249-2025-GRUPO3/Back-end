@@ -63,7 +63,8 @@ describe('🔹 SpaceRoutes', () => {
         jest.clearAllMocks();
     });
 
-    describe('📌 POST /', () => {
+    // Se ha quitado este método
+    /*describe('📌 POST /', () => {
         it('Se llama al método del controlador createSpace con autenticación', async () => {
             const spaceData = {
                 name: 'Aula 1.01',
@@ -86,7 +87,7 @@ describe('🔹 SpaceRoutes', () => {
             expect(mockSpaceController.createSpace).toHaveBeenCalled();
             expect(response.body).toHaveProperty('id', 'space123');
         });
-    });
+    });*/
 
     describe('📌 GET /:id', () => {
         it('Se llama al método del controlador getSpaceById', async () => {
@@ -117,7 +118,8 @@ describe('🔹 SpaceRoutes', () => {
         });
     });
 
-    describe('📌 DELETE /:id', () => {
+    // Se ha quitado este metodo
+    /*describe('📌 DELETE /:id', () => {
         it('Se llama al método del controlador deleteSpace con autenticación', async () => {
             const response = await request(app).delete('/api/spaces/space123');
 
@@ -127,7 +129,7 @@ describe('🔹 SpaceRoutes', () => {
             expect(mockSpaceController.deleteSpace).toHaveBeenCalled();
             expect(response.body).toHaveProperty('deleted', true);
         });
-    });
+    });*/
 
     describe('📌 GET /', () => {
         it('Se llama al método del controlador getAllSpaces', async () => {
