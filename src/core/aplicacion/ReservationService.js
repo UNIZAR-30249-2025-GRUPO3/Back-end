@@ -133,12 +133,21 @@ class ReservationService {
       throw new Error('La reserva debe comenzar y terminar el mismo día');
     }
 
-    //Obtener el día de la semana y su horario
     const dayOfWeek = start.format('dddd').toLowerCase();
-    const schedule = space.customSchedule?.[dayOfWeek];
+
+    let schedule;
+
+    if (['monday', 'tuesday', 'wednesday', 'thursday', 'friday'].includes(dayOfWeek)) {
+      schedule = space.customSchedule?.['weekdays'];
+    } else if (['saturday', 'sunday'].includes(dayOfWeek)) {
+      schedule = space.customSchedule?.[dayOfWeek];
+    }
+
+    // Validar si hay horario disponible
     if (!schedule || !schedule.open || !schedule.close) {
       throw new Error(`El espacio no está disponible para reservas el ${dayOfWeek}`);
     }
+
 
     const openTime = moment(start.format('YYYY-MM-DD') + 'T' + schedule.open);
     const closeTime = moment(start.format('YYYY-MM-DD') + 'T' + schedule.close);
