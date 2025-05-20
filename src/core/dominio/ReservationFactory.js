@@ -10,8 +10,8 @@ const Reservation = require('./Reservation');
 class ReservationFactory {
   
     // FUNCIÓN FACTORÍA: Crea una reserva estándar
-    static createStandardReservation(id, userId, spaceIds, usageType, maxAttendees, startTime, duration, additionalDetails, category) {
-        return new Reservation(id, userId, spaceIds, usageType, maxAttendees, startTime, duration, additionalDetails, category);
+    static createStandardReservation(id, userId, spaceIds, usageType, maxAttendees, startTime, duration, additionalDetails) {
+        return new Reservation(id, userId, spaceIds, usageType, maxAttendees, startTime, duration, additionalDetails);
     }
     
     // FUNCIÓN FACTORÍA: Crea una reserva a partir de datos existentes
@@ -25,7 +25,6 @@ class ReservationFactory {
             ReservationData.startTime,
             ReservationData.duration,
             ReservationData.additionalDetails,
-            ReservationData.category,
             ReservationData.status
         );
     }

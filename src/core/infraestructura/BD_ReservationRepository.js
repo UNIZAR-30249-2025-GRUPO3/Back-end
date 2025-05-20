@@ -27,8 +27,8 @@ class BD_ReservationRepository extends ReservationRepository {
 
     async save(reservation) {
         const res = await pool.query(`
-            INSERT INTO reservations ("userId", "spaceIds", "usageType", "maxAttendees", "startTime", duration, "endTime", "additionalDetails", category, status)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+            INSERT INTO reservations ("userId", "spaceIds", "usageType", "maxAttendees", "startTime", duration, "endTime", "additionalDetails", status)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
             RETURNING *;
         `, [
             reservation.userId,
@@ -39,7 +39,6 @@ class BD_ReservationRepository extends ReservationRepository {
             reservation.duration,
             reservation.endTime,
             reservation.additionalDetails || null,
-            reservation.category,
             reservation.status || 'pending'
         ]);
 
@@ -61,9 +60,8 @@ class BD_ReservationRepository extends ReservationRepository {
                 duration = $6,
                 "endTime" = $7,
                 "additionalDetails" = $8,
-                category = $9,
-                status = $10
-            WHERE id = $11
+                status = $9
+            WHERE id = $10
             RETURNING *;
         `, [
             reservation.userId,
@@ -74,7 +72,6 @@ class BD_ReservationRepository extends ReservationRepository {
             reservation.duration,
             reservation.endTime,
             reservation.additionalDetails || null,
-            reservation.category,
             reservation.status,
             reservation.id
         ]);
