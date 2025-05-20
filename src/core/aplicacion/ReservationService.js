@@ -5,6 +5,7 @@ const BD_ReservationRepository = require('../infraestructura/BD_ReservationRepos
 const UserService = require('./UserService');
 const SpaceService = require('./SpaceService');
 const ReservationFactory = require('../dominio/ReservationFactory');
+const moment = require('moment');
 
 /**
  * ReservationService.js
@@ -84,7 +85,7 @@ class ReservationService {
 
 
   // Función para validar las reglas de la reserva
-  async validateUserCanReserveSpace(userId, spaceId,startTime, duration) {
+  async validateUserCanReserveSpace(userId, spaceId, startTime, duration) {
       
     // Obtener información del usuario
     const user = await this.userService.handleGetUserById({ id: userId });
@@ -97,20 +98,20 @@ class ReservationService {
 
     // Verificación de rol y categoría de la reserva
     if (user.role === "estudiante") { 
-        if (space.reservationCategory !== "sala común") {
+        if (space.reservationCategory.toString() !== "sala común") {
             throw new Error('Los estudiantes solo pueden reservar salas comunes');
         }
     } else if (user.role === "técnico de laboratorio") {
-        if (space.reservationCategory ===  "aula") {
+        if (space.reservationCategory.toString() ===  "aula") {
             throw new Error('Los técnicos de laboratorio no pueden reservar aulas');
-        }else if (space.reservationCategory === "laboratorio"){
+        }else if (space.reservationCategory.toString() === "laboratorio"){
           if (space.assignmentTarget.type !== "department" || 
             !space.assignmentTarget.targets.includes(user.department)) {
             throw new Error('El rol no puede reservar este tipo de espacio o no pertenece a su departamento');
         }
         }
     } else if (["investigador contratado", "docente-investigador"].includes(user.role)) { 
-      if (space.reservationCategory === "laboratorio") {
+      if (space.reservationCategory.toString() === "laboratorio") {
           if (space.assignmentTarget.type !== "department" || 
               !space.assignmentTarget.targets.includes(user.department)) {
               throw new Error('El rol no puede reservar este tipo de espacio o no pertenece a su departamento');
@@ -119,8 +120,32 @@ class ReservationService {
   }
 
     // Verificar que la categoría de reserva no sea despacho
-    if (space.reservationCategory === "despacho" && space.category === 'despacho') {
+    if (space.reservationCategory.toString()=== "despacho" && space.category === 'despacho') {
         throw new Error('La categoría de despacho no puede ser reservable');
+    }
+
+    // Validación de horario
+    const start = moment(startTime);
+    const end = moment(startTime).add(duration, 'minutes');
+
+    //Verificar que no cruce al día siguiente
+    if (!start.isSame(end, 'day')) {
+      throw new Error('La reserva debe comenzar y terminar el mismo día');
+    }
+
+    //Obtener el día de la semana y su horario
+    const dayOfWeek = start.format('dddd').toLowerCase();
+    const schedule = space.customSchedule?.[dayOfWeek];
+    if (!schedule || !schedule.open || !schedule.close) {
+      throw new Error(`El espacio no está disponible para reservas el ${dayOfWeek}`);
+    }
+
+    const openTime = moment(start.format('YYYY-MM-DD') + 'T' + schedule.open);
+    const closeTime = moment(start.format('YYYY-MM-DD') + 'T' + schedule.close);
+
+    //Verificar no difiera horario de apertura y cierre
+    if (start.isBefore(openTime) || end.isAfter(closeTime)) {
+      throw new Error(`La reserva debe estar entre ${schedule.open} y ${schedule.close} del ${dayOfWeek}`);
     }
 
     // Verificar disponibilidad del espacio
@@ -128,6 +153,7 @@ class ReservationService {
     if (overlappingReservations.length > 0) {
         throw new Error('El espacio ya está reservado en el periodo de tiempo solicitado');
     }
+    space.c
 
     // Si todas las validaciones pasan, podemos continuar
     return true;
