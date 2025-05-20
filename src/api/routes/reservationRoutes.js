@@ -12,10 +12,6 @@ const { isAuthenticated } = require('../middleware/authMiddleware');
  * @swagger
  * components:
  *   schemas:
- *     ReservationCategory:
- *       type: string
- *       description: Categoría de reserva del espacio
- *       enum: [aula, seminario, laboratorio, "sala común"]
  *     Reservation:
  *       type: object
  *       required:
@@ -26,7 +22,6 @@ const { isAuthenticated } = require('../middleware/authMiddleware');
  *         - maxAttendees
  *         - startTime
  *         - duration
- *         - category
  *       properties:
  *         id:
  *           type: string
@@ -60,8 +55,6 @@ const { isAuthenticated } = require('../middleware/authMiddleware');
  *         additionalDetails:
  *           type: string
  *           description: Detalles adicionales sobre la reserva
- *         category:
- *           $ref: '#/components/schemas/ReservationCategory'
  *         status:
  *           type: string
  *           description: Estado actual de la reserva (por defecto 'valid')
@@ -97,7 +90,6 @@ function setupReservationRoutes(reservationController) {
    *             maxAttendees: 20
    *             startTime: "2025-04-21T10:00:00Z"
    *             duration: 60
-   *             category: "aula"
    * 
    *     responses:
    *       201:
@@ -249,7 +241,6 @@ function setupReservationRoutes(reservationController) {
    *             maxAttendees: 10
    *             startTime: "2025-04-21T14:00:00Z"
    *             duration: 90
-   *             category: "sala común"
    *     responses:
    *       200:
    *         description: Reserva actualizada exitosamente

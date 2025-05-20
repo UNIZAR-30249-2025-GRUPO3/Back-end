@@ -84,7 +84,7 @@ class ReservationService {
 
 
   // Función para validar las reglas de la reserva
-  async validateUserCanReserveSpace(userId, spaceId, reservationCategory, maxAttendees, startTime, duration) {
+  async validateUserCanReserveSpace(userId, spaceId,startTime, duration) {
       
     // Obtener información del usuario
     const user = await this.userService.handleGetUserById({ id: userId });
@@ -97,20 +97,20 @@ class ReservationService {
 
     // Verificación de rol y categoría de la reserva
     if (user.role === "estudiante") { 
-        if (reservationCategory !== "sala común") {
+        if (space.reservationCategory !== "sala común") {
             throw new Error('Los estudiantes solo pueden reservar salas comunes');
         }
     } else if (user.role === "técnico de laboratorio") {
-        if (reservationCategory ===  "aula") {
+        if (space.reservationCategory ===  "aula") {
             throw new Error('Los técnicos de laboratorio no pueden reservar aulas');
-        }else if (reservationCategory === "laboratorio"){
+        }else if (space.reservationCategory === "laboratorio"){
           if (space.assignmentTarget.type !== "department" || 
             !space.assignmentTarget.targets.includes(user.department)) {
             throw new Error('El rol no puede reservar este tipo de espacio o no pertenece a su departamento');
         }
         }
     } else if (["investigador contratado", "docente-investigador"].includes(user.role)) { 
-      if (reservationCategory === "laboratorio") {
+      if (space.reservationCategory === "laboratorio") {
           if (space.assignmentTarget.type !== "department" || 
               !space.assignmentTarget.targets.includes(user.department)) {
               throw new Error('El rol no puede reservar este tipo de espacio o no pertenece a su departamento');
@@ -119,17 +119,8 @@ class ReservationService {
   }
 
     // Verificar que la categoría de reserva no sea despacho
-    if (reservationCategory === "despacho" && space.category === 'despacho') {
+    if (space.reservationCategory === "despacho" && space.category === 'despacho') {
         throw new Error('La categoría de despacho no puede ser reservable');
-    }
-
-    // Verificación de ocupación máxima
-    const maxUsagePercentage = space.maxUsagePercentage;
-    const maxOccupancy = space.capacity;
-    const maxOccupancyAllowed = (maxOccupancy * maxUsagePercentage) / 100;
-
-    if (maxAttendees > maxOccupancyAllowed) {
-        throw new Error('El número máximo de asistentes excede el límite del espacio');
     }
 
     // Verificar disponibilidad del espacio
@@ -149,23 +140,27 @@ class ReservationService {
   async handleCreateReservation(Reservationdata) {
 
     try{
-        await this.validateUserCanReserveSpace(
+        for (const spaceId of Reservationdata.spaceIds) {
+          await this.validateUserCanReserveSpace(
             Reservationdata.userId,
-            Reservationdata.spaceIds[0],
-            Reservationdata.category,
-            Reservationdata.maxAttendees,
+            spaceId,
             Reservationdata.startTime,
             Reservationdata.duration
           );
-        
-        // Obtener categoría del espacio si es nula
-        if (Reservationdata.category === null) {
-            const spaceInfo = await this.spaceService.handleGetSpaceById({ id: Reservationdata.spaceId });
-            if (!spaceInfo.reservationCategory) {
-                throw new Error('El espacio no tiene una categoría definida');
-            }
-            Reservationdata.category = spaceInfo.reservationCategory;
         }
+
+        // Verificación de ocupación máxima
+        let totalCapacityAllowed = 0;
+        for (const spaceId of Reservationdata.spaceIds) {
+          const space = await this.spaceService.handleGetSpaceById({ id: spaceId});
+          const capacityAllowed = space.capacity * (space.maxUsagePercentage / 100);
+          totalCapacityAllowed += capacityAllowed;
+        }
+
+        if (Reservationdata.maxAttendees > totalCapacityAllowed) {
+          throw new Error(`El número de asistentes (${Reservationdata.maxAttendees}) excede la capacidad total permitida (${totalCapacityAllowed}) de los espacios seleccionados.`);
+        }
+        
 
         // Validación de dominio y creación del objeto
         const reservation = ReservationFactory.createStandardReservation(
@@ -176,8 +171,7 @@ class ReservationService {
           Reservationdata.maxAttendees,
           Reservationdata.startTime,
           Reservationdata.duration,
-          Reservationdata.additionalDetails,
-          Reservationdata.category
+          Reservationdata.additionalDetails
         );
       
         const savedReservation = await this.reservationRepository.save(reservation);
@@ -247,14 +241,26 @@ class ReservationService {
   
       const reservationObj = existingReservation.toObject ? existingReservation.toObject() : existingReservation;
   
-      await this.validateUserCanReserveSpace(
-        Reservationdata.userId,
-        Reservationdata.spaceIds[0],
-        Reservationdata.category,
-        Reservationdata.maxAttendees,
-        Reservationdata.startTime,
-        Reservationdata.duration
-      );
+      for (const spaceId of Reservationdata.spaceIds) {
+        await this.validateUserCanReserveSpace(
+          Reservationdata.userId,
+          spaceId,
+          Reservationdata.startTime,
+          Reservationdata.duration
+        );
+      }
+
+      // Verificación de ocupación máxima
+      let totalCapacityAllowed = 0;
+      for (const spaceId of Reservationdata.spaceIds) {
+        const space = await this.spaceService.handleGetSpaceById({ id: spaceId});
+        const capacityAllowed = space.capacity * (space.maxUsagePercentage / 100);
+        totalCapacityAllowed += capacityAllowed;
+      }
+
+      if (Reservationdata.maxAttendees > totalCapacityAllowed) {
+        throw new Error(`El número de asistentes (${Reservationdata.maxAttendees}) excede la capacidad total permitida (${totalCapacityAllowed}) de los espacios seleccionados.`);
+      }
 
       const updatedReservation = {
         ...reservationObj,
