@@ -111,14 +111,14 @@ class ReservationService {
             throw new Error('Los técnicos de laboratorio no pueden reservar aulas');
         }else if (space.reservationCategory.name === "laboratorio"){
           if (space.assignmentTarget.type !== "department" || 
-            !space.assignmentTarget.targets.includes(user.department)) {
+            !space.assignmentTarget.targets.includes(user.department.name)) {
             throw new Error('El rol no puede reservar este tipo de espacio o no pertenece a su departamento');
         }
         }
     } else if (roles.includes("investigador contratado") || (roles.includes("docente-investigador") && !roles.includes("gerente"))) { 
       if (space.reservationCategory.name === "laboratorio") {
           if (space.assignmentTarget.type !== "department" || 
-              !space.assignmentTarget.targets.includes(user.department)) {
+              !space.assignmentTarget.targets.includes(user.department.name)) {
               throw new Error('El rol no puede reservar este tipo de espacio o no pertenece a su departamento');
           }
       }
