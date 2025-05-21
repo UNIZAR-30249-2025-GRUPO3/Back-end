@@ -109,7 +109,7 @@ class ReservationService {
     } else if (roles.includes("técnico de laboratorio")) {
         if (space.reservationCategory.name ===  "aula") {
             throw new Error('Los técnicos de laboratorio no pueden reservar aulas');
-        }else if (space.reservationCategory.name === "laboratorio"){
+        }else if (space.reservationCategory.name === "laboratorio" || space.reservationCategory.name === "seminario"){
           if (space.assignmentTarget.type !== "department" || 
             !space.assignmentTarget.targets.includes(user.department.name)) {
             throw new Error('El rol no puede reservar este tipo de espacio o no pertenece a su departamento');
