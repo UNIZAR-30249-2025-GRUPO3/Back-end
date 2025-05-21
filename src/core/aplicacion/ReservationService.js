@@ -96,14 +96,17 @@ class ReservationService {
     if (!space) throw new Error('Espacio no encontrado');
     if (!space.isReservable) throw new Error('El espacio no es reservable');
 
-    console.log("Categoría de reserva del espacio:", space.reservationCategory.name);
-    
+
+    const roles = user.role?.roles?.map(r => r.toLowerCase()) || [];
+
+    const isGerente = roles.includes("gerente");
+
     // Verificación de rol y categoría de la reserva
-    if (user.role === "estudiante") { 
+    if (roles.includes("estudiante")) { 
         if (space.reservationCategory.name !== "sala común") {
             throw new Error('Los estudiantes solo pueden reservar salas comunes');
         }
-    } else if (user.role === "técnico de laboratorio") {
+    } else if (roles.includes("técnico de laboratorio")) {
         if (space.reservationCategory.name ===  "aula") {
             throw new Error('Los técnicos de laboratorio no pueden reservar aulas');
         }else if (space.reservationCategory.name === "laboratorio"){
@@ -112,7 +115,7 @@ class ReservationService {
             throw new Error('El rol no puede reservar este tipo de espacio o no pertenece a su departamento');
         }
         }
-    } else if (["investigador contratado", "docente-investigador"].includes(user.role)) { 
+    } else if (roles.includes("investigador contratado") || (roles.includes("docente-investigador") && !roles.includes("gerente"))) { 
       if (space.reservationCategory.name === "laboratorio") {
           if (space.assignmentTarget.type !== "department" || 
               !space.assignmentTarget.targets.includes(user.department)) {
@@ -164,7 +167,6 @@ class ReservationService {
     if (overlappingReservations.length > 0) {
         throw new Error('El espacio ya está reservado en el periodo de tiempo solicitado');
     }
-    space.c
 
     // Si todas las validaciones pasan, podemos continuar
     return true;
