@@ -96,22 +96,24 @@ class ReservationService {
     if (!space) throw new Error('Espacio no encontrado');
     if (!space.isReservable) throw new Error('El espacio no es reservable');
 
+    console.log("Categoría de reserva del espacio:", space.reservationCategory.name);
+    
     // Verificación de rol y categoría de la reserva
     if (user.role === "estudiante") { 
-        if (space.reservationCategory.toString() !== "sala común") {
+        if (space.reservationCategory.name !== "sala común") {
             throw new Error('Los estudiantes solo pueden reservar salas comunes');
         }
     } else if (user.role === "técnico de laboratorio") {
-        if (space.reservationCategory.toString() ===  "aula") {
+        if (space.reservationCategory.name ===  "aula") {
             throw new Error('Los técnicos de laboratorio no pueden reservar aulas');
-        }else if (space.reservationCategory.toString() === "laboratorio"){
+        }else if (space.reservationCategory.name === "laboratorio"){
           if (space.assignmentTarget.type !== "department" || 
             !space.assignmentTarget.targets.includes(user.department)) {
             throw new Error('El rol no puede reservar este tipo de espacio o no pertenece a su departamento');
         }
         }
     } else if (["investigador contratado", "docente-investigador"].includes(user.role)) { 
-      if (space.reservationCategory.toString() === "laboratorio") {
+      if (space.reservationCategory.name === "laboratorio") {
           if (space.assignmentTarget.type !== "department" || 
               !space.assignmentTarget.targets.includes(user.department)) {
               throw new Error('El rol no puede reservar este tipo de espacio o no pertenece a su departamento');
@@ -120,7 +122,7 @@ class ReservationService {
   }
 
     // Verificar que la categoría de reserva no sea despacho
-    if (space.reservationCategory.toString()=== "despacho" && space.category === 'despacho') {
+    if (space.reservationCategory.name === "despacho" && space.category === 'despacho') {
         throw new Error('La categoría de despacho no puede ser reservable');
     }
 
