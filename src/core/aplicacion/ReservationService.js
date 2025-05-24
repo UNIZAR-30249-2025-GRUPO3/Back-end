@@ -4,7 +4,8 @@ const messageBroker = require('../infraestructura/messageBroker');
 const BD_ReservationRepository = require('../infraestructura/BD_ReservationRepository');
 const UserService = require('./UserService');
 const SpaceService = require('./SpaceService');
-const ReservationFactory = require('../dominio/Reservation/ReservationFactory');
+const ReservationFactory = require('../dominio/ReservationFactory');
+const moment = require('moment');
 
 /**
  * ReservationService.js
@@ -84,7 +85,7 @@ class ReservationService {
 
 
   // Función para validar las reglas de la reserva
-  async validateUserCanReserveSpace(userId, spaceId,startTime, duration) {
+  async validateUserCanReserveSpace(userId, spaceId, startTime, duration) {
       
     // Obtener información del usuario
     const user = await this.userService.handleGetUserById({ id: userId });
@@ -95,32 +96,73 @@ class ReservationService {
     if (!space) throw new Error('Espacio no encontrado');
     if (!space.isReservable) throw new Error('El espacio no es reservable');
 
+
+    const roles = user.role?.roles?.map(r => r.toLowerCase()) || [];
+
+    const isGerente = roles.includes("gerente");
+
     // Verificación de rol y categoría de la reserva
-    if (user.role === "estudiante") { 
-        if (space.reservationCategory !== "sala común") {
+    if (roles.includes("estudiante")) { 
+        if (space.reservationCategory.name !== "sala común") {
             throw new Error('Los estudiantes solo pueden reservar salas comunes');
         }
-    } else if (user.role === "técnico de laboratorio") {
-        if (space.reservationCategory ===  "aula") {
+    } else if (roles.includes("técnico de laboratorio")) {
+        if (space.reservationCategory.name ===  "aula") {
             throw new Error('Los técnicos de laboratorio no pueden reservar aulas');
-        }else if (space.reservationCategory === "laboratorio"){
+        }else if (space.reservationCategory.name === "laboratorio" || space.reservationCategory.name === "seminario"){
           if (space.assignmentTarget.type !== "department" || 
-            !space.assignmentTarget.targets.includes(user.department)) {
+            !space.assignmentTarget.targets.includes(user.department.name)) {
             throw new Error('El rol no puede reservar este tipo de espacio o no pertenece a su departamento');
         }
         }
-    } else if (["investigador contratado", "docente-investigador"].includes(user.role)) { 
-      if (space.reservationCategory === "laboratorio") {
+    } else if (roles.includes("investigador contratado") || (roles.includes("docente-investigador") && !roles.includes("gerente"))) { 
+      if (space.reservationCategory.name === "laboratorio") {
           if (space.assignmentTarget.type !== "department" || 
-              !space.assignmentTarget.targets.includes(user.department)) {
+              !space.assignmentTarget.targets.includes(user.department.name)) {
               throw new Error('El rol no puede reservar este tipo de espacio o no pertenece a su departamento');
           }
       }
   }
 
     // Verificar que la categoría de reserva no sea despacho
-    if (space.reservationCategory === "despacho" && space.category === 'despacho') {
+    if (space.reservationCategory.name === "despacho" && space.category === 'despacho') {
         throw new Error('La categoría de despacho no puede ser reservable');
+    }
+
+    // Validación de horario
+    const start = moment(startTime);
+    const end = moment(startTime).add(duration, 'minutes');
+
+    //Verificar que no cruce al día siguiente
+    if (!start.isSame(end, 'day')) {
+      throw new Error('La reserva debe comenzar y terminar el mismo día');
+    }
+
+    const dayOfWeek = start.format('dddd').toLowerCase();
+    const dayTranslations = {monday: 'lunes', tuesday: 'martes', wednesday: 'miércoles', thursday: 'jueves', friday: 'viernes', saturday: 'sábado', sunday: 'domingo'};
+    let schedule;
+
+
+    if (['monday', 'tuesday', 'wednesday', 'thursday', 'friday'].includes(dayOfWeek)) {
+      schedule = space.customSchedule?.['weekdays'];
+    } else if (['saturday', 'sunday'].includes(dayOfWeek)) {
+      schedule = space.customSchedule?.[dayOfWeek];
+    }
+
+    // Validar si hay horario disponible
+    if (!schedule || !schedule.open || !schedule.close) {
+      const dayInSpanish = dayTranslations[dayOfWeek] || dayOfWeek;
+      throw new Error(`El espacio no está disponible para reservas el día seleccionado: ${dayInSpanish}`);
+    }
+
+
+    const openTime = moment(start.format('YYYY-MM-DD') + 'T' + schedule.open);
+    const closeTime = moment(start.format('YYYY-MM-DD') + 'T' + schedule.close);
+
+    //Verificar no difiera horario de apertura y cierre
+    if (start.isBefore(openTime) || end.isAfter(closeTime)) {
+      const dayInSpanish = dayTranslations[dayOfWeek] || dayOfWeek;
+      throw new Error(`La reserva debe estar entre ${schedule.open} y ${schedule.close} del ${dayInSpanish}`);
     }
 
     // Verificar disponibilidad del espacio
