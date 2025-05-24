@@ -1,19 +1,20 @@
 const messageBroker = require('../infraestructura/messageBroker');
-const Building = require('../dominio/Building');
+const BD_BuildingRepository = require('../infraestructura/BD_BuildingRepository');
 
 /**
  * BuildingService.js
  * 
  * SERVICIO DE APLICACIÓN: 
  * - Implementa casos de uso específicos para el edificio
- * - Coordina el flujo de datos con el dominio
+ * - Coordina el flujo de datos con el dominio y la infraestructura
  */
 class BuildingService {
 
   constructor({ initializeConsumer = true } = {}) {
-    // Dependencia de infraestructura
+    // Dependencias de infraestructura
     this.messageBroker = messageBroker;
-    this.building = new Building();
+    this.buildingRepository = new BD_BuildingRepository();
+    this.buildingId = 'ada-byron'; // ID del único edificio del sistema
 
     this.queueName = 'building_operations';
   
@@ -84,13 +85,23 @@ class BuildingService {
   async handleGetBuildingInfo() {
     console.log('[BuildingService] Obteniendo información del edificio');
     
-    return {
-      id: this.building.id,
-      name: this.building.name,
-      floors: this.building.floors,
-      occupancyPercentage: this.building._maxOccupancyPercentage,
-      openingHours: this.building._openingHours
-    };
+    try {
+      const building = await this.buildingRepository.findById(this.buildingId);
+      if (!building) {
+        throw new Error('Edificio no encontrado');
+      }
+      
+      return {
+        id: building.id,
+        name: building.name,
+        floors: building.floors,
+        occupancyPercentage: building.maxOccupancyPercentage,
+        openingHours: building.openingHours
+      };
+    } catch (error) {
+      console.error('[BuildingService] Error obteniendo información del edificio:', error);
+      throw error;
+    }
   }
 
   // ===================================
@@ -99,9 +110,19 @@ class BuildingService {
   async handleGetOccupancyPercentage() {
     console.log('[BuildingService] Obteniendo porcentaje de ocupación');
     
-    return {
-      occupancyPercentage: this.building._maxOccupancyPercentage
-    };
+    try {
+      const building = await this.buildingRepository.findById(this.buildingId);
+      if (!building) {
+        throw new Error('Edificio no encontrado');
+      }
+      
+      return {
+        occupancyPercentage: building.maxOccupancyPercentage
+      };
+    } catch (error) {
+      console.error('[BuildingService] Error obteniendo porcentaje de ocupación:', error);
+      throw error;
+    }
   }
 
   // ===================================
@@ -110,9 +131,19 @@ class BuildingService {
   async handleGetOpeningHours() {
     console.log('[BuildingService] Obteniendo horarios de apertura');
     
-    return {
-      openingHours: this.building._openingHours
-    };
+    try {
+      const building = await this.buildingRepository.findById(this.buildingId);
+      if (!building) {
+        throw new Error('Edificio no encontrado');
+      }
+      
+      return {
+        openingHours: building.openingHours
+      };
+    } catch (error) {
+      console.error('[BuildingService] Error obteniendo horarios:', error);
+      throw error;
+    }
   }
 
   // ===================================
@@ -123,18 +154,22 @@ class BuildingService {
       throw new Error('Se requiere un porcentaje válido');
     }
 
-    if (data.percentage < 0 || data.percentage > 100) {
-      throw new Error('El porcentaje debe estar entre 0 y 100');
-    }
-
     console.log(`[BuildingService] Actualizando porcentaje de ocupación a: ${data.percentage}%`);
     
-    this.building._maxOccupancyPercentage = data.percentage;
-    
-    return {
-      success: true,
-      occupancyPercentage: this.building._maxOccupancyPercentage
-    };
+    try {
+      const updatedBuilding = await this.buildingRepository.updateOccupancyPercentage(
+        this.buildingId, 
+        data.percentage
+      );
+      
+      return {
+        success: true,
+        occupancyPercentage: updatedBuilding.maxOccupancyPercentage
+      };
+    } catch (error) {
+      console.error('[BuildingService] Error actualizando porcentaje de ocupación:', error);
+      throw error;
+    }
   }
 
   // ===================================
@@ -152,31 +187,50 @@ class BuildingService {
 
     console.log(`[BuildingService] Actualizando horarios para: ${data.day}`);
     
-    // Validar formato de horas (HH:MM o null)
-    const validateTimeFormat = (time) => {
-      if (time === null) return true;
-      const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
-      return timeRegex.test(time);
-    };
+    try {
+      // Obtener el edificio actual
+      const building = await this.buildingRepository.findById(this.buildingId);
+      if (!building) {
+        throw new Error('Edificio no encontrado');
+      }
 
-    if (
-      (data.hours.open !== undefined && !validateTimeFormat(data.hours.open)) ||
-      (data.hours.close !== undefined && !validateTimeFormat(data.hours.close))
-    ) {
-      throw new Error('Formato de hora inválido. Debe ser HH:MM o null');
+      // Validar formato de horas (HH:MM o null)
+      const validateTimeFormat = (time) => {
+        if (time === null) return true;
+        const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
+        return timeRegex.test(time);
+      };
+
+      if (
+        (data.hours.open !== undefined && !validateTimeFormat(data.hours.open)) ||
+        (data.hours.close !== undefined && !validateTimeFormat(data.hours.close))
+      ) {
+        throw new Error('Formato de hora inválido. Debe ser HH:MM o null');
+      }
+
+      // Preparar los nuevos horarios manteniendo los existentes
+      const newOpeningHours = { ...building.openingHours };
+      const currentHours = newOpeningHours[data.day];
+      
+      newOpeningHours[data.day] = {
+        open: data.hours.open !== undefined ? data.hours.open : currentHours.open,
+        close: data.hours.close !== undefined ? data.hours.close : currentHours.close
+      };
+
+      // Actualizar en la base de datos
+      const updatedBuilding = await this.buildingRepository.updateOpeningHours(
+        this.buildingId, 
+        newOpeningHours
+      );
+      
+      return {
+        success: true,
+        openingHours: updatedBuilding.openingHours
+      };
+    } catch (error) {
+      console.error('[BuildingService] Error actualizando horarios:', error);
+      throw error;
     }
-
-    // Actualizamos solo los campos proporcionados
-    const currentHours = this.building._openingHours[data.day];
-    this.building._openingHours[data.day] = {
-      open: data.hours.open !== undefined ? data.hours.open : currentHours.open,
-      close: data.hours.close !== undefined ? data.hours.close : currentHours.close
-    };
-    
-    return {
-      success: true,
-      openingHours: this.building._openingHours
-    };
   }
 }
 

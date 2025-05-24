@@ -53,11 +53,11 @@ const { isAuthenticated, gerenteAuthorized } = require('../middleware/authMiddle
  *                 open:
  *                   type: string
  *                   format: HH:MM
- *                   description: Hora de apertura (sábados)
+ *                   description: Hora de apertura (sábados), null si cerrado
  *                 close:
  *                   type: string
  *                   format: HH:MM
- *                   description: Hora de cierre (sábados)
+ *                   description: Hora de cierre (sábados), null si cerrado
  *             sunday:
  *               type: object
  *               properties:
@@ -94,8 +94,8 @@ function setupBuildingRoutes(buildingController) {
    *               floors: 4
    *               occupancyPercentage: 100
    *               openingHours:
-   *                 weekdays: { open: "08:00", close: "21:00" }
-   *                 saturday: { open: "09:00", close: "14:00" }
+   *                 weekdays: { open: "08:00", close: "21:30" }
+   *                 saturday: { open: null, close: null }
    *                 sunday: { open: null, close: null }
    *       400:
    *         description: Error en la solicitud
@@ -139,8 +139,8 @@ function setupBuildingRoutes(buildingController) {
    *           application/json:
    *             example:
    *               openingHours:
-   *                 weekdays: { open: "08:00", close: "21:00" }
-   *                 saturday: { open: "09:00", close: "14:00" }
+   *                 weekdays: { open: "08:00", close: "21:30" }
+   *                 saturday: { open: null, close: null }
    *                 sunday: { open: null, close: null }
    *       400:
    *         description: Error en la solicitud
@@ -230,8 +230,8 @@ function setupBuildingRoutes(buildingController) {
    *           example:
    *             day: "saturday"
    *             hours:
-   *               open: "10:00"
-   *               close: "15:00"
+   *               open: "09:00"
+   *               close: "14:00"
    *     responses:
    *       200:
    *         description: Horarios actualizados exitosamente
@@ -240,8 +240,8 @@ function setupBuildingRoutes(buildingController) {
    *             example:
    *               success: true
    *               openingHours:
-   *                 weekdays: { open: "08:00", close: "21:00" }
-   *                 saturday: { open: "10:00", close: "15:00" }
+   *                 weekdays: { open: "08:00", close: "21:30" }
+   *                 saturday: { open: "09:00", close: "14:00" }
    *                 sunday: { open: null, close: null }
    *       400:
    *         description: Error en la solicitud (día o formato de hora inválido)
