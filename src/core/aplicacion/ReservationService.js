@@ -4,7 +4,7 @@ const messageBroker = require('../infraestructura/messageBroker');
 const BD_ReservationRepository = require('../infraestructura/BD_ReservationRepository');
 const UserService = require('./UserService');
 const SpaceService = require('./SpaceService');
-const ReservationFactory = require('../dominio/ReservationFactory');
+const ReservationFactory = require('../dominio/Reservation/ReservationFactory');
 const moment = require('moment');
 
 /**
