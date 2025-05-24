@@ -1,17 +1,14 @@
-const BuildingRepository = require('../dominio/BuildingRepository');
-const Building = require('../dominio/Building');
 const pool = require('../infraestructura/db');
 
 /**
  * BD_BuildingRepository.js
  * 
- * IMPLEMENTACIÓN CONCRETA DEL REPOSITORIO: 
- * - Implementa la interfaz del repositorio
- * - Pertenece a la capa de infraestructura
- * - Se encarga de la persistencia real del edificio
+ * REPOSITORIO SIMPLIFICADO: 
+ * - Maneja la persistencia del edificio
  */
-class BD_BuildingRepository extends BuildingRepository {
+class BD_BuildingRepository {
     
+    // Obtener información completa del edificio
     async findById(id) {
         const res = await pool.query(
             'SELECT id, name, floors, max_occupancy_percentage, opening_hours FROM building WHERE id = $1', 
@@ -20,99 +17,89 @@ class BD_BuildingRepository extends BuildingRepository {
         
         if (res.rows.length === 0) return null;
         
-        const row = res.rows[0];
-        return new Building({
-            id: row.id,
-            name: row.name,
-            floors: row.floors,
-            maxOccupancyPercentage: row.max_occupancy_percentage,
-            openingHours: row.opening_hours
-        });
+        return res.rows[0];
     }
     
-    async update(building) {
-        const res = await pool.query(`
-            UPDATE building 
-            SET name = $1, 
-                floors = $2, 
-                max_occupancy_percentage = $3, 
-                opening_hours = $4
-            WHERE id = $5
-            RETURNING *;
-        `, [
-            building.name,
-            building.floors,
-            building.maxOccupancyPercentage,
-            JSON.stringify(building.openingHours),
-            building.id
-        ]);
+    // Obtener solo el porcentaje de ocupación
+    async getOccupancyPercentage(id) {
+        const res = await pool.query(
+            'SELECT max_occupancy_percentage FROM building WHERE id = $1', 
+            [id]
+        );
         
-        const row = res.rows[0];
-        if (!row) {
-            throw new Error('Edificio no encontrado');
-        }
+        if (res.rows.length === 0) return null;
         
-        console.log('[DEBUG] Edificio actualizado:', res.rows[0]);
-        
-        return new Building({
-            id: row.id,
-            name: row.name,
-            floors: row.floors,
-            maxOccupancyPercentage: row.max_occupancy_percentage,
-            openingHours: row.opening_hours
-        });
+        return res.rows[0];
     }
     
+    // Obtener solo los horarios de apertura
+    async getOpeningHours(id) {
+        const res = await pool.query(
+            'SELECT opening_hours FROM building WHERE id = $1', 
+            [id]
+        );
+        
+        if (res.rows.length === 0) return null;
+        
+        return res.rows[0];
+    }
+    
+    // Actualizar porcentaje de ocupación
     async updateOccupancyPercentage(id, percentage) {
-        if (percentage < 0 || percentage > 100) {
-            throw new Error('El porcentaje debe estar entre 0 y 100');
-        }
-        
         const res = await pool.query(`
             UPDATE building 
             SET max_occupancy_percentage = $1
             WHERE id = $2
-            RETURNING *;
+            RETURNING max_occupancy_percentage;
         `, [percentage, id]);
         
-        const row = res.rows[0];
-        if (!row) {
+        if (res.rows.length === 0) {
             throw new Error('Edificio no encontrado');
         }
         
         console.log('[DEBUG] Porcentaje de ocupación actualizado:', percentage);
         
-        return new Building({
-            id: row.id,
-            name: row.name,
-            floors: row.floors,
-            maxOccupancyPercentage: row.max_occupancy_percentage,
-            openingHours: row.opening_hours
-        });
+        return res.rows[0];
     }
     
-    async updateOpeningHours(id, openingHours) {
-        const res = await pool.query(`
+    // Actualizar horarios de apertura
+    async updateOpeningHours(id, day, hours) {
+        // Primero obtenemos los horarios actuales
+        const currentRes = await pool.query(
+            'SELECT opening_hours FROM building WHERE id = $1', 
+            [id]
+        );
+        
+        if (currentRes.rows.length === 0) {
+            throw new Error('Edificio no encontrado');
+        }
+
+        const currentOpeningHours = currentRes.rows[0].opening_hours;
+        
+        // Preparar los nuevos horarios manteniendo los existentes
+        const newOpeningHours = { ...currentOpeningHours };
+        const currentHours = newOpeningHours[day];
+        
+        newOpeningHours[day] = {
+            open: hours.open !== undefined ? hours.open : currentHours.open,
+            close: hours.close !== undefined ? hours.close : currentHours.close
+        };
+
+        // Actualizar en la base de datos
+        const updateRes = await pool.query(`
             UPDATE building 
             SET opening_hours = $1
             WHERE id = $2
-            RETURNING *;
-        `, [JSON.stringify(openingHours), id]);
+            RETURNING opening_hours;
+        `, [JSON.stringify(newOpeningHours), id]);
         
-        const row = res.rows[0];
-        if (!row) {
+        if (updateRes.rows.length === 0) {
             throw new Error('Edificio no encontrado');
         }
         
-        console.log('[DEBUG] Horarios de apertura actualizados:', openingHours);
+        console.log('[DEBUG] Horarios de apertura actualizados:', newOpeningHours);
         
-        return new Building({
-            id: row.id,
-            name: row.name,
-            floors: row.floors,
-            maxOccupancyPercentage: row.max_occupancy_percentage,
-            openingHours: row.opening_hours
-        });
+        return updateRes.rows[0];
     }
 }
 
