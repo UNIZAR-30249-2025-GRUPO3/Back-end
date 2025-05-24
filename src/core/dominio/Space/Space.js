@@ -1,5 +1,5 @@
 const SpaceType = require('./SpaceType');
-const ReservationCategory = require('./ReservationCategory');
+const ReservationCategory = require('../Reservation/ReservationCategory');
 const AssignmentTarget = require('./AssignmentTarget');
 
 const validReservationCategoriesPerSpaceType = {

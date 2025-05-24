@@ -1,6 +1,6 @@
 const messageBroker = require('../infraestructura/messageBroker');
 const BD_UserRepository = require('../infraestructura/BD_UserRepository');
-const UserFactory = require('../dominio/UserFactory');
+const UserFactory = require('../dominio/User/UserFactory');
 
 /**
  * UserService.js

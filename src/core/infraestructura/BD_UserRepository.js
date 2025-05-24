@@ -1,5 +1,5 @@
-const UserRepository = require('../dominio/UserRepository');
-const UserFactory = require('../dominio/UserFactory');
+const UserRepository = require('../dominio/User/UserRepository');
+const UserFactory = require('../dominio/User/UserFactory');
 const pool = require('../infraestructura/db');
 
 /**
