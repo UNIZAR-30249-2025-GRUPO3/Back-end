@@ -1,5 +1,5 @@
-const ReservationFactory = require('../dominio/ReservationFactory');
-const ReservationRepository = require('../dominio/ReservationRepository');
+const ReservationFactory = require('../dominio/Reservation/ReservationFactory');
+const ReservationRepository = require('../dominio/Reservation/ReservationRepository');
 const pool = require('../infraestructura/db');
 
 /**

@@ -1,5 +1,5 @@
-const SpaceRepository = require('../dominio/SpaceRepository');
-const SpaceFactory = require('../dominio/SpaceFactory');
+const SpaceRepository = require('../dominio/Space/SpaceRepository');
+const SpaceFactory = require('../dominio/Space/SpaceFactory');
 const pool = require('../infraestructura/db');
 
 /**

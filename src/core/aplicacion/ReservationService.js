@@ -4,7 +4,7 @@ const messageBroker = require('../infraestructura/messageBroker');
 const BD_ReservationRepository = require('../infraestructura/BD_ReservationRepository');
 const UserService = require('./UserService');
 const SpaceService = require('./SpaceService');
-const ReservationFactory = require('../dominio/ReservationFactory');
+const ReservationFactory = require('../dominio/Reservation/ReservationFactory');
 const moment = require('moment');
 
 /**
@@ -127,39 +127,6 @@ class ReservationService {
     // Verificar que la categoría de reserva no sea despacho
     if (space.reservationCategory.name === "despacho" && space.category === 'despacho') {
         throw new Error('La categoría de despacho no puede ser reservable');
-    }
-
-    // Validación de horario
-    const start = moment(startTime);
-    const end = moment(startTime).add(duration, 'minutes');
-
-    //Verificar que no cruce al día siguiente
-    if (!start.isSame(end, 'day')) {
-      throw new Error('La reserva debe comenzar y terminar el mismo día');
-    }
-
-    const dayOfWeek = start.format('dddd').toLowerCase();
-
-    let schedule;
-
-    if (['monday', 'tuesday', 'wednesday', 'thursday', 'friday'].includes(dayOfWeek)) {
-      schedule = space.customSchedule?.['weekdays'];
-    } else if (['saturday', 'sunday'].includes(dayOfWeek)) {
-      schedule = space.customSchedule?.[dayOfWeek];
-    }
-
-    // Validar si hay horario disponible
-    if (!schedule || !schedule.open || !schedule.close) {
-      throw new Error(`El espacio no está disponible para reservas el ${dayOfWeek}`);
-    }
-
-
-    const openTime = moment(start.format('YYYY-MM-DD') + 'T' + schedule.open);
-    const closeTime = moment(start.format('YYYY-MM-DD') + 'T' + schedule.close);
-
-    //Verificar no difiera horario de apertura y cierre
-    if (start.isBefore(openTime) || end.isAfter(closeTime)) {
-      throw new Error(`La reserva debe estar entre ${schedule.open} y ${schedule.close} del ${dayOfWeek}`);
     }
 
     // Verificar disponibilidad del espacio

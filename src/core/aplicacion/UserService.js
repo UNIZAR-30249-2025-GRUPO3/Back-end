@@ -1,6 +1,6 @@
 const messageBroker = require('../infraestructura/messageBroker');
 const BD_UserRepository = require('../infraestructura/BD_UserRepository');
-const UserFactory = require('../dominio/UserFactory');
+const UserFactory = require('../dominio/User/UserFactory');
 
 /**
  * UserService.js
@@ -209,7 +209,25 @@ class UserService {
       updatedData.department = userObj.department ? userObj.department.name : null;
     }
     
-    const rolesToUse = userData.updateFields.role || currentRoles;
+    let rolesToUse;
+
+    if (userData.updateFields.role) {
+        if (Array.isArray(userData.updateFields.role)) {
+            rolesToUse = userData.updateFields.role;
+        } 
+        else if (userData.updateFields.role.roles) {
+            rolesToUse = Array.isArray(userData.updateFields.role.roles) 
+                      ? userData.updateFields.role.roles 
+                      : [userData.updateFields.role.roles];
+        }
+        else {
+            rolesToUse = [userData.updateFields.role];
+        }
+    } else {
+        rolesToUse = currentRoles;
+    }
+
+    console.log('Roles:', rolesToUse);
     
     // Validación del dominio mediante factoría
     try {

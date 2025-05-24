@@ -1,5 +1,5 @@
 const SpaceType = require('./SpaceType');
-const ReservationCategory = require('./ReservationCategory');
+const ReservationCategory = require('../Reservation/ReservationCategory');
 const AssignmentTarget = require('./AssignmentTarget');
 
 const validReservationCategoriesPerSpaceType = {
@@ -24,7 +24,7 @@ class Space {
                 assignmentTarget, maxUsagePercentage, customSchedule, idSpace) {
         
         // Validaciones que mantienen la integridad del agregado
-        this.validateSpaceInput(id, name, floor, capacity, spaceType, idSpace);
+        this.validateSpaceInput(id, name, floor, capacity, spaceType, idSpace, maxUsagePercentage);
 
         // =======================
         // Propiedades invariables
@@ -60,7 +60,7 @@ class Space {
     }
 
     // ASERCIÓN: Método que valida las invariantes básicas del agregado
-    validateSpaceInput(id, name, floor, capacity, spaceType, idSpace) {
+    validateSpaceInput(id, name, floor, capacity, spaceType, idSpace, maxUsagePercentage) {
         if (!id) {
             throw new Error("ERROR: Falta asignar un identificador");
         }
@@ -83,6 +83,17 @@ class Space {
 
         if (!idSpace) {
             throw new Error("El id real del espacio es obligatorio.");
+        }
+
+        // Validación del porcentaje máximo de uso
+        if (maxUsagePercentage !== null && maxUsagePercentage !== undefined) {
+            if (typeof maxUsagePercentage !== 'number' || isNaN(maxUsagePercentage)) {
+                throw new Error("El porcentaje máximo de uso debe ser un número.");
+            }
+            
+            if (maxUsagePercentage < 0 || maxUsagePercentage > 100) {
+                throw new Error("El porcentaje máximo de uso debe estar entre 0 y 100.");
+            }
         }
     }
 

@@ -2,7 +2,7 @@ const messageBroker = require('../infraestructura/messageBroker');
 const BD_SpaceRepository = require('../infraestructura/BD_SpaceRepository');
 const BuildingService = require('./BuildingService');
 const UserService = require('./UserService');
-const SpaceFactory = require('../dominio/SpaceFactory');
+const SpaceFactory = require('../dominio/Space/SpaceFactory');
 
 /**
  * SpaceService.js
