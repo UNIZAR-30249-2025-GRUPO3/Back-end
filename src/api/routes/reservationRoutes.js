@@ -228,19 +228,6 @@ function setupReservationRoutes(reservationController) {
    *         schema:
    *           type: string
    *         description: ID de la reserva a actualizar
-   *     requestBody:
-   *       required: true
-   *       content:
-   *         application/json:
-   *           schema:
-   *             $ref: '#/components/schemas/Reservation'
-   *           example:
-   *             userId: 2
-   *             spaceIds: [1]
-   *             usageType: "gestion"
-   *             maxAttendees: 10
-   *             startTime: "2025-04-21T14:00:00Z"
-   *             duration: 90
    *     responses:
    *       200:
    *         description: Reserva actualizada exitosamente
