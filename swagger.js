@@ -11,10 +11,10 @@ const swaggerOptions = {
         },
         servers: [
             {
-                url: "http://localhost:3000"
+                url: "https://back-end-sv3z.onrender.com"
             },
             {
-                url: "https://back-end-sv3z.onrender.com"
+                url: "http://localhost:3000"
             }
         ],
         components: {
