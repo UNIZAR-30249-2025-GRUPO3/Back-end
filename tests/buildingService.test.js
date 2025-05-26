@@ -1,14 +1,26 @@
 const BuildingService = require('../src/core/aplicacion/BuildingService');
 const messageBroker = require('../src/core/infraestructura/messageBroker');
-const Building = require('../src/core/dominio/Building');
+const BD_BuildingRepository = require('../src/core/infraestructura/BD_BuildingRepository');
 
 jest.mock('../src/core/infraestructura/messageBroker');
+jest.mock('../src/core/infraestructura/BD_BuildingRepository');
 
 describe('🔹 BuildingService', () => {
     let buildingService;
+    let mockBuildingRepository;
     
     beforeEach(() => {
         jest.clearAllMocks();
+        
+        mockBuildingRepository = {
+            findById: jest.fn(),
+            getOccupancyPercentage: jest.fn(),
+            getOpeningHours: jest.fn(),
+            updateOccupancyPercentage: jest.fn(),
+            updateOpeningHours: jest.fn()
+        };
+        
+        BD_BuildingRepository.mockImplementation(() => mockBuildingRepository);
         
         buildingService = new BuildingService({ initializeConsumer: false });
         
@@ -25,8 +37,24 @@ describe('🔹 BuildingService', () => {
     
     describe('📌 handleGetBuildingInfo', () => {
         it('Devuelve la información completa del edificio', async () => {
+
+            const mockBuildingData = {
+                id: 'ada-byron',
+                name: 'Edificio Ada Byron',
+                floors: 4,
+                max_occupancy_percentage: 100,
+                opening_hours: {
+                    weekdays: { open: '08:00', close: '21:30' },
+                    saturday: { open: null, close: null },
+                    sunday: { open: null, close: null }
+                }
+            };
+            
+            mockBuildingRepository.findById.mockResolvedValue(mockBuildingData);
+            
             const result = await buildingService.handleGetBuildingInfo();
             
+            expect(mockBuildingRepository.findById).toHaveBeenCalledWith('ada-byron');
             expect(result).toEqual({
                 id: 'ada-byron',
                 name: 'Edificio Ada Byron',
@@ -39,22 +67,58 @@ describe('🔹 BuildingService', () => {
                 }
             });
         });
+        
+        it('Lanza error cuando el edificio no se encuentra', async () => {
+
+            mockBuildingRepository.findById.mockResolvedValue(null);
+            
+            await expect(buildingService.handleGetBuildingInfo())
+                .rejects.toThrow('Edificio no encontrado');
+        });
     });
     
     describe('📌 handleGetOccupancyPercentage', () => {
         it('Devuelve el porcentaje de ocupación del edificio', async () => {
+
+            const mockOccupancyData = {
+                max_occupancy_percentage: 100
+            };
+            
+            mockBuildingRepository.getOccupancyPercentage.mockResolvedValue(mockOccupancyData);
+            
             const result = await buildingService.handleGetOccupancyPercentage();
             
+            expect(mockBuildingRepository.getOccupancyPercentage).toHaveBeenCalledWith('ada-byron');
             expect(result).toEqual({
                 occupancyPercentage: 100
             });
+        });
+        
+        it('Lanza error cuando el edificio no se encuentra', async () => {
+
+            mockBuildingRepository.getOccupancyPercentage.mockResolvedValue(null);
+            
+            await expect(buildingService.handleGetOccupancyPercentage())
+                .rejects.toThrow('Edificio no encontrado');
         });
     });
     
     describe('📌 handleGetOpeningHours', () => {
         it('Devuelve los horarios de apertura del edificio', async () => {
+
+            const mockHoursData = {
+                opening_hours: {
+                    weekdays: { open: '08:00', close: '21:30' },
+                    saturday: { open: null, close: null },
+                    sunday: { open: null, close: null }
+                }
+            };
+            
+            mockBuildingRepository.getOpeningHours.mockResolvedValue(mockHoursData);
+            
             const result = await buildingService.handleGetOpeningHours();
             
+            expect(mockBuildingRepository.getOpeningHours).toHaveBeenCalledWith('ada-byron');
             expect(result).toEqual({
                 openingHours: {
                     weekdays: { open: '08:00', close: '21:30' },
@@ -63,14 +127,29 @@ describe('🔹 BuildingService', () => {
                 }
             });
         });
+        
+        it('Lanza error cuando el edificio no se encuentra', async () => {
+
+            mockBuildingRepository.getOpeningHours.mockResolvedValue(null);
+            
+            await expect(buildingService.handleGetOpeningHours())
+                .rejects.toThrow('Edificio no encontrado');
+        });
     });
     
     describe('📌 handleUpdateOccupancyPercentage', () => {
         it('Actualiza correctamente el porcentaje de ocupación', async () => {
+
             const newPercentage = 75;
+            const mockUpdatedData = {
+                max_occupancy_percentage: newPercentage
+            };
+            
+            mockBuildingRepository.updateOccupancyPercentage.mockResolvedValue(mockUpdatedData);
+            
             const result = await buildingService.handleUpdateOccupancyPercentage({ percentage: newPercentage });
             
-            expect(buildingService.building._maxOccupancyPercentage).toBe(newPercentage);
+            expect(mockBuildingRepository.updateOccupancyPercentage).toHaveBeenCalledWith('ada-byron', newPercentage);
             expect(result).toEqual({
                 success: true,
                 occupancyPercentage: newPercentage
@@ -99,15 +178,20 @@ describe('🔹 BuildingService', () => {
         });
         
         it('Actualiza correctamente a valores límite', async () => {
+
+            const mockUpdatedData0 = { max_occupancy_percentage: 0 };
+            mockBuildingRepository.updateOccupancyPercentage.mockResolvedValueOnce(mockUpdatedData0);
+            
             let result = await buildingService.handleUpdateOccupancyPercentage({ percentage: 0 });
-            expect(buildingService.building._maxOccupancyPercentage).toBe(0);
             expect(result).toEqual({
                 success: true,
                 occupancyPercentage: 0
             });
             
+            const mockUpdatedData100 = { max_occupancy_percentage: 100 };
+            mockBuildingRepository.updateOccupancyPercentage.mockResolvedValueOnce(mockUpdatedData100);
+            
             result = await buildingService.handleUpdateOccupancyPercentage({ percentage: 100 });
-            expect(buildingService.building._maxOccupancyPercentage).toBe(100);
             expect(result).toEqual({
                 success: true,
                 occupancyPercentage: 100
@@ -117,6 +201,7 @@ describe('🔹 BuildingService', () => {
     
     describe('📌 handleUpdateOpeningHours', () => {
         it('Actualiza correctamente los horarios de un día específico', async () => {
+
             const newHours = {
                 day: 'weekdays',
                 hours: {
@@ -125,12 +210,23 @@ describe('🔹 BuildingService', () => {
                 }
             };
             
+            const mockUpdatedData = {
+                opening_hours: {
+                    weekdays: { open: '07:00', close: '20:00' },
+                    saturday: { open: null, close: null },
+                    sunday: { open: null, close: null }
+                }
+            };
+            
+            mockBuildingRepository.updateOpeningHours.mockResolvedValue(mockUpdatedData);
+            
             const result = await buildingService.handleUpdateOpeningHours(newHours);
             
-            expect(buildingService.building._openingHours.weekdays).toEqual({
-                open: '07:00',
-                close: '20:00'
-            });
+            expect(mockBuildingRepository.updateOpeningHours).toHaveBeenCalledWith(
+                'ada-byron', 
+                'weekdays',
+                { open: '07:00', close: '20:00' }
+            );
             
             expect(result).toEqual({
                 success: true,
@@ -143,6 +239,7 @@ describe('🔹 BuildingService', () => {
         });
         
         it('Actualiza correctamente cuando se proporciona sólo un campo de hora', async () => {
+
             const updateOpenOnly = {
                 day: 'weekdays',
                 hours: {
@@ -150,12 +247,23 @@ describe('🔹 BuildingService', () => {
                 }
             };
             
+            const mockUpdatedDataOpen = {
+                opening_hours: {
+                    weekdays: { open: '07:30', close: '21:30' },
+                    saturday: { open: null, close: null },
+                    sunday: { open: null, close: null }
+                }
+            };
+            
+            mockBuildingRepository.updateOpeningHours.mockResolvedValueOnce(mockUpdatedDataOpen);
+            
             let result = await buildingService.handleUpdateOpeningHours(updateOpenOnly);
             
-            expect(buildingService.building._openingHours.weekdays).toEqual({
-                open: '07:30',
-                close: '21:30'
-            });
+            expect(mockBuildingRepository.updateOpeningHours).toHaveBeenCalledWith(
+                'ada-byron', 
+                'weekdays',
+                { open: '07:30' }
+            );
             
             const updateCloseOnly = {
                 day: 'weekdays',
@@ -164,15 +272,27 @@ describe('🔹 BuildingService', () => {
                 }
             };
             
+            const mockUpdatedDataClose = {
+                opening_hours: {
+                    weekdays: { open: '07:30', close: '15:30' },
+                    saturday: { open: null, close: null },
+                    sunday: { open: null, close: null }
+                }
+            };
+            
+            mockBuildingRepository.updateOpeningHours.mockResolvedValueOnce(mockUpdatedDataClose);
+            
             result = await buildingService.handleUpdateOpeningHours(updateCloseOnly);
             
-            expect(buildingService.building._openingHours.weekdays).toEqual({
-                open: '07:30',
-                close: '15:30'
-            });
+            expect(mockBuildingRepository.updateOpeningHours).toHaveBeenCalledWith(
+                'ada-byron', 
+                'weekdays',
+                { close: '15:30' }
+            );
         });
         
         it('Establece correctamente horarios nulos para días cerrados', async () => {
+
             const closedDay = {
                 day: 'sunday',
                 hours: {
@@ -181,12 +301,23 @@ describe('🔹 BuildingService', () => {
                 }
             };
             
+            const mockUpdatedData = {
+                opening_hours: {
+                    weekdays: { open: '08:00', close: '21:30' },
+                    saturday: { open: null, close: null },
+                    sunday: { open: null, close: null }
+                }
+            };
+            
+            mockBuildingRepository.updateOpeningHours.mockResolvedValue(mockUpdatedData);
+            
             const result = await buildingService.handleUpdateOpeningHours(closedDay);
             
-            expect(buildingService.building._openingHours.sunday).toEqual({
-                open: null,
-                close: null
-            });
+            expect(mockBuildingRepository.updateOpeningHours).toHaveBeenCalledWith(
+                'ada-byron', 
+                'sunday',
+                { open: null, close: null }
+            );
             
             expect(result.openingHours.sunday).toEqual({
                 open: null,
@@ -271,6 +402,8 @@ describe('🔹 BuildingService', () => {
                 expect.stringContaining('Error en setupConsumers'), 
                 expect.any(Error)
             );
+            
+            consoleErrorSpy.mockRestore();
         });
     });
 });
