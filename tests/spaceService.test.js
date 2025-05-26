@@ -7,32 +7,70 @@ jest.mock('../src/core/aplicacion/BuildingService');
 jest.mock('../src/core/aplicacion/UserService');
 
 describe('🔹 SpaceService', () => {
-    let spaceService;
     
+    let spaceService;
+    let mockUserService;
+    let mockReservationService;
+    let mockBuildingService;
+    let mockSpaceRepository;
+
     beforeEach(() => {
         jest.clearAllMocks();
-        
+
+        mockUserService = {
+            handleGetUserById: jest.fn()
+        };
+
+        mockReservationService = {
+            handlegetAllReservation: jest.fn().mockResolvedValue([]), 
+            validateUserCanReserveSpace: jest.fn().mockResolvedValue(),
+            handleInvalidReservation: jest.fn().mockResolvedValue()
+        };
+
+        mockBuildingService = {
+            handleGetOccupancyPercentage: jest.fn(),
+            handleGetOpeningHours: jest.fn(),
+            handleGetBuildingInfo: jest.fn()
+        };
+
+        mockSpaceRepository = {
+            update: jest.fn(),
+            save: jest.fn(),
+            findById: jest.fn(),
+            findAll: jest.fn(),
+            findByFloor: jest.fn(),
+            findByCategory: jest.fn(),
+            delete: jest.fn(),
+        };
+
         spaceService = new SpaceService();
-  
-        messageBroker.connect.mockResolvedValue();
-        messageBroker.consume.mockImplementation((queue, callback) => {
-            return Promise.resolve({ consumerTag: 'mock-consumer-tag' });
-        });
-        messageBroker.sendResponse.mockResolvedValue();
-        
-        spaceService.buildingService.handleGetOccupancyPercentage.mockResolvedValue({
+
+        spaceService.userService = mockUserService;
+        spaceService.reservationService = mockReservationService;
+        spaceService.buildingService = mockBuildingService;
+        spaceService.spaceRepository = mockSpaceRepository;
+
+        spaceService.messageBroker = {
+            connect: jest.fn().mockResolvedValue(),
+            consume: jest.fn().mockImplementation((queue, callback) =>
+                Promise.resolve({ consumerTag: 'mock-consumer-tag' })
+            ),
+            sendResponse: jest.fn().mockResolvedValue()
+        };
+
+        mockBuildingService.handleGetOccupancyPercentage.mockResolvedValue({
             occupancyPercentage: 80
         });
-        
-        spaceService.buildingService.handleGetOpeningHours.mockResolvedValue({
+
+        mockBuildingService.handleGetOpeningHours.mockResolvedValue({
             openingHours: {
                 weekdays: { open: "08:00", close: "21:00" },
                 saturday: { open: "09:00", close: "14:00" },
                 sunday: { open: null, close: null }
             }
         });
-        
-        spaceService.buildingService.handleGetBuildingInfo.mockResolvedValue({
+
+        mockBuildingService.handleGetBuildingInfo.mockResolvedValue({
             occupancyPercentage: 80,
             openingHours: {
                 weekdays: { open: "08:00", close: "21:00" },
@@ -40,35 +78,32 @@ describe('🔹 SpaceService', () => {
                 sunday: { open: null, close: null }
             }
         });
-        
-        // Mock de UserService
-        spaceService.userService.handleGetUserById.mockImplementation(({ id }) => {
-            if (id === 'valid-user-id') {
-                return Promise.resolve({
+
+        mockUserService.handleGetUserById.mockImplementation(({ id }) => {
+            const users = {
+                'valid-user-id': {
                     id: 'valid-user-id',
                     name: 'Test User',
                     email: 'test@example.com',
                     role: ['docente-investigador']
-                });
-            } else if (id === 'investigador-id') {
-                return Promise.resolve({
+                },
+                'investigador-id': {
                     id: 'investigador-id',
                     name: 'Investigador',
                     email: 'investigador@example.com',
                     role: ['investigador contratado']
-                });
-            } else if (id === 'invalid-role-id') {
-                return Promise.resolve({
+                },
+                'invalid-role-id': {
                     id: 'invalid-role-id',
                     name: 'Invalid Role',
                     email: 'invalid@example.com',
                     role: ['estudiante']
-                });
-            } else {
-                return Promise.reject(new Error('Usuario no encontrado'));
-            }
+                }
+            };
+            return Promise.resolve(users[id] || null);
         });
     });
+
     
     describe('📌 handleCreateSpace', () => {
         const validSpaceData = {
@@ -678,24 +713,35 @@ describe('🔹 SpaceService', () => {
     });
     
     describe('📌 setupConsumers', () => {
+        beforeEach(() => {
+            spaceService.messageBroker = {
+                connect: jest.fn().mockResolvedValue(),
+                consume: jest.fn().mockResolvedValue({ consumerTag: 'mock-consumer-tag' }),
+                sendResponse: jest.fn().mockResolvedValue()
+            };
+        });
         it('Se conecta al broker y hace setup de los consumidores', async () => {
-            messageBroker.connect.mockClear();
-            messageBroker.consume.mockClear();
-            
             await spaceService.setupConsumers();
-            
-            expect(messageBroker.connect).toHaveBeenCalled();
-            expect(messageBroker.consume).toHaveBeenCalledWith('space_operations', expect.any(Function));
+
+            expect(spaceService.messageBroker.connect).toHaveBeenCalled();
+            expect(spaceService.messageBroker.consume).toHaveBeenCalledWith(
+                'space_operations',
+                expect.any(Function)
+            );
         });
         
         it('Maneja errores de conexión', async () => {
             const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-            messageBroker.connect.mockRejectedValue(new Error('Connection error'));
-            
+
+            spaceService.messageBroker.connect.mockRejectedValue(new Error('Connection error'));
+
             await spaceService.setupConsumers();
-            
-            expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Error en setupConsumers'), expect.any(Error));
-            
+
+            expect(consoleErrorSpy).toHaveBeenCalledWith(
+                expect.stringContaining('Error en setupConsumers'),
+                expect.any(Error)
+            );
+
             consoleErrorSpy.mockRestore();
         });
     });

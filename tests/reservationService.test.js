@@ -12,65 +12,110 @@ jest.mock('../src/core/aplicacion/SpaceService');
 describe('🔹 ReservationService', () => {
     let reservationService;
     
+    let mockUserService;
+    let mockSpaceService;
+    let mockReservationRepository;
+
     beforeEach(() => {
         jest.clearAllMocks();
-        
+
+        mockUserService = {
+            handleGetUserById: jest.fn()
+        };
+
+        mockSpaceService = {
+            handleGetSpaceById: jest.fn()
+        };
+
+        mockReservationRepository = {
+            save: jest.fn(),
+            findOverlappingReservations: jest.fn(),
+            findByUserId: jest.fn(),
+            findById: jest.fn(),
+            update: jest.fn(),
+        };
+
         reservationService = new ReservationService();
-        
-        // Mock básico de messageBroker
-        messageBroker.connect.mockResolvedValue();
-        messageBroker.consume.mockImplementation((queue, callback) => {
-            return Promise.resolve({ consumerTag: 'mock-consumer-tag' });
-        });
-        messageBroker.sendResponse.mockResolvedValue();
-        
-        // Mock de UserService
-        reservationService.userService.handleGetUserById.mockImplementation(({ id }) => {
+
+        reservationService.userService = mockUserService;
+        reservationService.spaceService = mockSpaceService;
+        reservationService.reservationRepository = mockReservationRepository;
+
+        reservationService.messageBroker = {
+            connect: jest.fn().mockResolvedValue(),
+            consume: jest.fn().mockImplementation((queue, callback) => Promise.resolve({ consumerTag: 'mock-consumer-tag' })),
+            sendResponse: jest.fn().mockResolvedValue()
+        };
+
+        mockUserService.handleGetUserById.mockImplementation(({ id }) => {
             const users = {
                 'docente-id': {
                     id: 'docente-id',
                     name: 'Docente Ejemplo',
                     email: 'docente@example.com',
-                    role: 'docente-investigador',
-                    department: 'informática e ingeniería de sistemas'
+                    role: {
+                        roles: ['docente-investigador']
+                    },
+                    department: {name:'informática e ingeniería de sistemas'}
                 },
                 'tecnico-id': {
                     id: 'tecnico-id',
                     name: 'Técnico Ejemplo',
                     email: 'tecnico@example.com',
-                    role: 'técnico de laboratorio',
-                    department: 'informática e ingeniería de sistemas'
+                    role: {
+                        roles: ['técnico de laboratorio']
+                    },
+                    department: {name:'informática e ingeniería de sistemas'}
                 },
                 'estudiante-id': {
                     id: 'estudiante-id',
                     name: 'Estudiante Ejemplo',
                     email: 'estudiante@example.com',
-                    role: 'estudiante'
+                    role: {
+                        roles: ['estudiante']
+                    }
                 },
                 'tecnico-otro-dep': {
-                    id: 'tecni',
+                    id: 'tecnico-otro-dep',
                     name: 'Técnico Ejemplo',
                     email: 'tecnico2@example.com',
-                    role: 'técnico de laboratorio',
-                    department: 'ingeniería electrónica y comunicaciones'
+                    role: {
+                        roles: ['técnico de laboratorio']
+                    },
+                    department:{name: 'ingeniería electrónica y comunicaciones'}
                 }
             };
             return Promise.resolve(users[id] || null);
         });
-        
-        // Mock de SpaceService
-        reservationService.spaceService.handleGetSpaceById.mockImplementation(({ id }) => {
+
+        mockSpaceService.handleGetSpaceById.mockImplementation(({ id }) => {
             const spaces = {
                 'aula-123': {
                     id: 'aula-123',
                     name: 'Aula 1.01',
                     capacity: 40,
                     isReservable: true,
-                    reservationCategory: 'aula',
+                    reservationCategory: {
+                        name: 'aula'
+                    },
                     maxUsagePercentage: 80,
                     assignmentTarget: {
                         type: 'eina',
                         targets: []
+                    },
+                    customSchedule: {
+                        weekdays: {
+                            open: "08:00",
+                            close: "21:00"
+                        },
+                        saturday: {
+                            open: "09:00",
+                            close: "14:00"
+                        },
+                        sunday: {
+                            open: null,
+                            close: null
+                        }
                     }
                 },
                 'lab-456': {
@@ -78,11 +123,27 @@ describe('🔹 ReservationService', () => {
                     name: 'Laboratorio 2.03',
                     capacity: 20,
                     isReservable: true,
-                    reservationCategory: 'laboratorio',
+                    reservationCategory: {
+                        name: 'laboratorio'
+                    },
                     maxUsagePercentage: 70,
                     assignmentTarget: {
                         type: 'department',
                         targets: ['informática e ingeniería de sistemas']
+                    },
+                    customSchedule: {
+                        weekdays: {
+                            open: "08:00",
+                            close: "21:00"
+                        },
+                        saturday: {
+                            open: "09:00",
+                            close: "14:00"
+                        },
+                        sunday: {
+                            open: null,
+                            close: null
+                        }
                     }
                 },
                 'sala-789': {
@@ -90,11 +151,27 @@ describe('🔹 ReservationService', () => {
                     name: 'Sala Común',
                     capacity: 15,
                     isReservable: true,
-                    reservationCategory: 'sala común',
+                    reservationCategory: {
+                        name: 'sala común'
+                    },
                     maxUsagePercentage: 100,
                     assignmentTarget: {
                         type: 'eina',
                         targets: []
+                    },
+                    customSchedule: {
+                        weekdays: {
+                            open: "08:00",
+                            close: "21:00"
+                        },
+                        saturday: {
+                            open: "09:00",
+                            close: "14:00"
+                        },
+                        sunday: {
+                            open: null,
+                            close: null
+                        }
                     }
                 },
                 'despacho-999': {
@@ -102,23 +179,39 @@ describe('🔹 ReservationService', () => {
                     name: 'Despacho 3.01',
                     capacity: 1,
                     isReservable: false,
-                    reservationCategory: 'despacho',
+                    reservationCategory: {
+                        name: 'despacho'
+                    },
                     assignmentTarget: {
                         type: 'person',
                         targets: ['docente-id']
+                    },
+                    customSchedule: {
+                        weekdays: {
+                            open: "08:00",
+                            close: "21:00"
+                        },
+                        saturday: {
+                            open: "09:00",
+                            close: "14:00"
+                        },
+                        sunday: {
+                            open: null,
+                            close: null
+                        }
                     }
                 }
             };
             return Promise.resolve(spaces[id] || null);
         });
-        
-        // Mock de ReservationRepository
-        reservationService.reservationRepository.save.mockImplementation(reservation => 
+
+        mockReservationRepository.save.mockImplementation(reservation =>
             Promise.resolve({ ...reservation, id: 'reserva-mock-id' })
         );
-        
-        reservationService.reservationRepository.findOverlappingReservations.mockResolvedValue([]);
+
+        mockReservationRepository.findOverlappingReservations.mockResolvedValue([]);
     });
+
     
     describe('📌 handleCreateReservation', () => {
         const validReservationData = {
@@ -126,9 +219,8 @@ describe('🔹 ReservationService', () => {
             spaceIds: ['aula-123'],
             usageType: 'docencia',
             maxAttendees: 30,
-            startTime: '2025-04-25T10:00:00Z',
+            startTime: '2025-06-26T10:00:00Z',
             duration: 60,
-            category: 'aula'
         };
         
         it('Crea una reserva válida para docente en aula', async () => {
@@ -146,7 +238,6 @@ describe('🔹 ReservationService', () => {
                 ...validReservationData,
                 userId: 'estudiante-id',
                 spaceIds: ['sala-789'],
-                category: 'sala común',
                 maxAttendees: 10
             };
             
@@ -167,7 +258,9 @@ describe('🔹 ReservationService', () => {
         it('Rechaza reserva de laboratorio por técnico de otro departamento', async () => {
             reservationService.userService.handleGetUserById.mockResolvedValueOnce({
                 id: 'tecnico-otro-dep',
-                role: 'técnico de laboratorio',
+                role: {
+                    roles: ['técnico de laboratorio']
+                },
                 department: 'ingeniería electrónica y comunicaciones'
             });
 
@@ -178,7 +271,6 @@ describe('🔹 ReservationService', () => {
                 maxAttendees: 10, 
                 startTime: '2025-04-25T16:00:00Z',
                 duration: 120,
-                category: 'laboratorio'
             };
             
             await expect(reservationService.handleCreateReservation(invalidReservation))
@@ -202,19 +294,19 @@ describe('🔹 ReservationService', () => {
             };
             
             await expect(reservationService.handleCreateReservation(invalidReservation))
-                .rejects.toThrow('El número máximo de asistentes excede el límite');
+                .rejects.toThrow('El número de asistentes (50) excede la capacidad total permitida (32) de los espacios seleccionados.');
         });
         
         it('Rechaza reserva con horario solapado', async () => {
             reservationService.reservationRepository.findOverlappingReservations.mockResolvedValueOnce([{
                 id: 'reserva-existente',
                 spaceId: 'aula-123',
-                startTime: '2025-04-25T10:30:00Z',
+                startTime: '2025-06-30T10:30:00Z',
                 duration: 60
             }]);
             
             await expect(reservationService.handleCreateReservation(validReservationData))
-                .rejects.toThrow('El espacio ya está reservado');
+                .rejects.toThrow('El espacio ya está reservado en el periodo de tiempo solicitado');
         });
     });
 
@@ -232,57 +324,6 @@ describe('🔹 ReservationService', () => {
             reservationService.validateUserCanReserveSpace = jest.fn().mockResolvedValue(true);
         });
     
-        /*it('debería validar y actualizar correctamente una reserva', async () => {
-            const reservaOriginal = {
-                id: 'reserva-123',
-                userId: 'user-456',
-                spaceIds: ['aula-101'],
-                status: 'potentially_invalid',
-                maxAttendees: 20,
-                startTime: '2025-05-01T10:00:00Z',
-                duration: 60,
-                category: 'aula',
-                additionalDetails: 'Clase de matemáticas'
-            };
-            
-            const datosActualizacion = {
-                id: 'reserva-123',
-                maxAttendees: 25, 
-                additionalDetails: 'Clase de matemáticas avanzadas', 
-                status: 'potentially_invalid' 
-            };
-            
-            const reservaEsperada = {
-                ...reservaOriginal,
-                ...datosActualizacion,
-                status: 'valid' 
-            };
-            
-            reservationService.reservationRepository.findById.mockResolvedValue(reservaOriginal);
-            reservationService.reservationRepository.update.mockResolvedValue(reservaEsperada);
-            
-            const resultado = await reservationService.handleValidateReservation(datosActualizacion);
-            
-            expect(reservationService.reservationRepository.findById).toHaveBeenCalledWith('reserva-123');
-            
-            expect(reservationService.validateUserCanReserveSpace).toHaveBeenCalledWith(
-                'user-456', 
-                'aula-101', 
-                'aula',     
-                25,         
-                '2025-05-01T10:00:00Z', 
-                60        
-            );
-            
-            expect(reservationService.reservationRepository.update).toHaveBeenCalledWith(
-                'reserva-123',
-                reservaEsperada
-            );
-            
-            expect(resultado).toEqual(reservaEsperada);
-            expect(resultado.status).toBe('valid');
-        });*/
-    
         it('debería fallar si la reserva no existe', async () => {
             reservationService.reservationRepository.findById.mockResolvedValue(null);
             
@@ -297,27 +338,9 @@ describe('🔹 ReservationService', () => {
             ).rejects.toThrow('El campo "id" es requerido');
         });
     
-        /*it('debería fallar si la validación de reserva falla', async () => {
-            const reserva = {
-                id: 'reserva-123',
-                userId: 'user-456',
-                spaceIds: ['aula-101'],
-                maxAttendees: 50, 
-                category: 'aula'
-            };
-            
-            reservationService.reservationRepository.findById.mockResolvedValue(reserva);
-            reservationService.validateUserCanReserveSpace.mockRejectedValue(
-                new Error('Capacidad excedida')
-            );
-            
-            await expect(
-                reservationService.handleValidateReservation({ id: 'reserva-123' })
-            ).rejects.toThrow('Capacidad excedida');
-        });*/
     });
     
-    /*describe('📌 handleInvalidReservation', () => {
+    describe('📌 handleInvalidReservation', () => {
         it('Invalida una reserva existente', async () => {
             const reservaValida = {
                 id: 'reserva-valida',
@@ -326,15 +349,16 @@ describe('🔹 ReservationService', () => {
             };
             
             reservationService.reservationRepository.findById.mockResolvedValueOnce(reservaValida);
-            reservationService.reservationRepository.update.mockImplementation((id, data) => 
-                Promise.resolve({ ...reservaValida, ...data })
+            reservationService.reservationRepository.update.mockImplementation((updated) =>
+                Promise.resolve(updated)
             );
+
             
             const result = await reservationService.handleInvalidReservation({ id: 'reserva-valida' });
             
             expect(result).toHaveProperty('status', 'potentially_invalid');
         });
-    });*/
+    });
     
     describe('📌 handleGetReservationsByUser', () => {
         it('Obtiene reservas de un usuario', async () => {

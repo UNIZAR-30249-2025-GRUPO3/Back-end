@@ -1,18 +1,28 @@
 const UserService = require('../src/core/aplicacion/UserService');
 const messageBroker = require('../src/core/infraestructura/messageBroker');
-const User = require('../src/core/dominio/User');
+const User = require('../src/core/dominio/User/User');
 
 jest.mock('../src/core/infraestructura/messageBroker');
 jest.mock('../src/core/infraestructura/BD_UserRepository');
 
 describe('🔹 UserService', () => {
     let userService;
+    let mockReservationService;
     
     beforeEach(() => {
 
         jest.clearAllMocks();
         
         userService = new UserService();
+
+        mockReservationService = {
+            handlegetAllReservation: jest.fn().mockResolvedValue([]), 
+            validateUserCanReserveSpace: jest.fn().mockResolvedValue(),
+            handleInvalidReservation: jest.fn().mockResolvedValue(),
+            handleGetReservationsByUser: jest.fn().mockResolvedValue([]),
+        };
+
+        userService.reservationService = mockReservationService;
   
         messageBroker.connect.mockResolvedValue();
             messageBroker.consume.mockImplementation((queue, callback) => {
