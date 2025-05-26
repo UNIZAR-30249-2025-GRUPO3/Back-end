@@ -129,6 +129,39 @@ class ReservationService {
         throw new Error('La categoría de despacho no puede ser reservable');
     }
 
+    //Verificar que no cruce al día siguiente
+    if (!start.isSame(end, 'day')) {
+      throw new Error('La reserva debe comenzar y terminar el mismo día');
+    }
+
+    const dayOfWeek = start.format('dddd').toLowerCase();
+    const dayTranslations = {monday: 'lunes', tuesday: 'martes', wednesday: 'miércoles', thursday: 'jueves', friday: 'viernes', saturday: 'sábado', sunday: 'domingo'};
+    let schedule;
+
+
+    if (['monday', 'tuesday', 'wednesday', 'thursday', 'friday'].includes(dayOfWeek)) {
+      schedule = space.customSchedule?.['weekdays'];
+    } else if (['saturday', 'sunday'].includes(dayOfWeek)) {
+      schedule = space.customSchedule?.[dayOfWeek];
+    }
+
+    // Validar si hay horario disponible
+    if (!schedule || !schedule.open || !schedule.close) {
+      const dayInSpanish = dayTranslations[dayOfWeek] || dayOfWeek;
+      throw new Error(`El espacio no está disponible para reservas el día seleccionado: ${dayInSpanish}`);
+    }
+
+
+    const openTime = moment(start.format('YYYY-MM-DD') + 'T' + schedule.open);
+    const closeTime = moment(start.format('YYYY-MM-DD') + 'T' + schedule.close);
+
+    //Verificar no difiera horario de apertura y cierre
+    if (start.isBefore(openTime) || end.isAfter(closeTime)) {
+      const dayInSpanish = dayTranslations[dayOfWeek] || dayOfWeek;
+      throw new Error(`La reserva debe estar entre ${schedule.open} y ${schedule.close} del ${dayInSpanish}`);
+    }
+
+
     // Verificar disponibilidad del espacio
     const overlappingReservations = await this.reservationRepository.findOverlappingReservations(spaceId, startTime, duration);
     if (overlappingReservations.length > 0) {
