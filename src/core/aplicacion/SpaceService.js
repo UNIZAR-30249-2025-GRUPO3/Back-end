@@ -406,7 +406,7 @@ class SpaceService {
           await this.reservationService.validateUserCanReserveSpace(userId, updatedSpace.id, startTime, duration);
           let totalCapacityAllowed = 0;
           for (const spaceId of spaceIds) {
-            const space = await this.spaceService.handleGetSpaceById({ id: spaceId});
+            const space = await this.spaceRepository.findById(spaceId);
             const capacityAllowed = space.capacity * (space.maxUsagePercentage / 100);
             totalCapacityAllowed += capacityAllowed;
           }
