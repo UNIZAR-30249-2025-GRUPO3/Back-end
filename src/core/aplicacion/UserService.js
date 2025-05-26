@@ -259,8 +259,8 @@ class UserService {
       email: updatedUser.email,
       changes: userData.updateFields
     });
-
-    const reservations = await this.reservationService.handleGetReservationsByUser({ id: updatedUser.id });
+  
+    const reservations = await this.reservationService.handleGetReservationsByUser({ userId: updatedUser.id });
     for (const reservation of reservations) {
       const { id: reservationId, spaceIds, startTime, duration } = reservation;
 
