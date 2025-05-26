@@ -45,6 +45,10 @@ const buildingController = new BuildingController();
 const spaceController = new SpaceController();
 const reservationController = new ReservationController();
 
+reservationService.init({ userService });
+userService.init({ reservationService });
+spaceService.init({ userService, reservationService });
+
 var app = express();
 
 const cors = require('cors');
