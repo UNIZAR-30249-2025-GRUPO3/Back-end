@@ -135,6 +135,10 @@ class ReservationService {
         throw new Error('La categoría de despacho no puede ser reservable');
     }
 
+    // Validación de horario
+    const start = moment(startTime);
+    const end = moment(startTime).add(duration, 'minutes');
+
     //Verificar que no cruce al día siguiente
     if (!start.isSame(end, 'day')) {
       throw new Error('La reserva debe comenzar y terminar el mismo día');
