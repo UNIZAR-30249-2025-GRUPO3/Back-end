@@ -1,6 +1,7 @@
 const messageBroker = require('../infraestructura/messageBroker');
 const BD_UserRepository = require('../infraestructura/BD_UserRepository');
 const UserFactory = require('../dominio/User/UserFactory');
+const ReservationService = require('./ReservationService');
 
 /**
  * UserService.js
@@ -15,6 +16,7 @@ class UserService {
     // Dependencias de infraestructura
     this.userRepository = new BD_UserRepository();
     this.messageBroker = messageBroker; // Guarda la instancia
+    this.reservationService = new ReservationService({ initializeConsumer: false });
 
     if (initializeConsumer) {
       // Inicialización de consumidores de mensajes
@@ -253,6 +255,21 @@ class UserService {
       email: updatedUser.email,
       changes: userData.updateFields
     });
+
+    const reservations = await this.reservationService.handleGetReservationsByUser({ id: updatedUser.id });
+    for (const reservation of reservations) {
+      const { id: reservationId, spaceIds, startTime, duration } = reservation;
+
+      for (const spaceId of spaceIds) {
+        try {
+          await this.reservationService.validateUserCanReserveSpace(updatedUser.id, spaceId, startTime, duration);
+        } catch (err) {
+          console.warn(`[UserService] Reserva ${reservationId} no válida para el espacio ${spaceId}: ${err.message}`);
+          await this.reservationService.handleInvalidReservation({ id: reservationId });
+          break;
+        }
+      }
+    }
   
     return updatedUser;
   }
