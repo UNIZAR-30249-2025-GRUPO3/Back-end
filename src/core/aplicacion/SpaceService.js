@@ -18,8 +18,8 @@ class SpaceService {
     // Dependencias de infraestructura
     this.spaceRepository = new BD_SpaceRepository();
     this.buildingService = new BuildingService({ initializeConsumer: false });
-    this.userService = new UserService({ initializeConsumer: false });
-    this.reservationService = new ReservationService({ initializeConsumer: false });
+    this.userService = null; 
+    this.reservationService = null;
 
     this.messageBroker = messageBroker; // Guarda la instancia
     
@@ -36,6 +36,11 @@ class SpaceService {
     this.setupConsumers().catch(err => {
       console.error('Error al iniciar consumidor:', err);
     });
+  }
+
+  init({ userService, reservationService }) {
+      this.userService = userService;
+      this.reservationService = reservationService;
   }
 
   // SERVICIO DISTRIBUIDO: Configuración para comunicación asíncrona

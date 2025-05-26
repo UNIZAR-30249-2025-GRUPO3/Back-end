@@ -16,7 +16,7 @@ class UserService {
     // Dependencias de infraestructura
     this.userRepository = new BD_UserRepository();
     this.messageBroker = messageBroker; // Guarda la instancia
-    this.reservationService = new ReservationService({ initializeConsumer: false });
+    this.reservationService = null;
 
     if (initializeConsumer) {
       // Inicialización de consumidores de mensajes
@@ -24,6 +24,10 @@ class UserService {
         console.error('Error al iniciar consumidor:', err);
       });
     }
+  }
+
+  init({reservationService }) {
+      this.reservationService = reservationService;
   }
 
   // SERVICIO DISTRIBUIDO: Configuración para comunicación asíncrona

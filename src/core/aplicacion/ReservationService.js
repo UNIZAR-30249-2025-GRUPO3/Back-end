@@ -19,7 +19,7 @@ const transporter = require('../infraestructura/mailer');
 class ReservationService {
   constructor() {
     this.reservationRepository = new BD_ReservationRepository();
-    this.userService = new UserService({ initializeConsumer: false });
+    this.userService = null; 
     this.spaceService = new SpaceService({ initializeConsumer: false });
 
     this.messageBroker = messageBroker;
@@ -28,6 +28,10 @@ class ReservationService {
       console.error('Error al iniciar consumidor de reservas:', err);
     });
   }
+
+    init({ userService }) {
+      this.userService = userService;
+    }
 
   // Configura el consumidor de mensajes RabbitMQ
   async setupConsumers() {
