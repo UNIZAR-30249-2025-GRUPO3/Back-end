@@ -96,7 +96,7 @@ class BD_ReservationRepository extends ReservationRepository {
         await pool.query(`
             DELETE FROM reservations 
             WHERE status = $1 AND invalidatedat <= $2
-        `, [query.status, query.invalidated_at.$lte]);
+        `, [query.status, query.invalidatedat.$lte]);
     }
 
     async findAll(filters = {}) {
