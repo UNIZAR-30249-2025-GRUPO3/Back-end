@@ -3,6 +3,7 @@ const BD_SpaceRepository = require('../infraestructura/BD_SpaceRepository');
 const BuildingService = require('./BuildingService');
 const UserService = require('./UserService');
 const SpaceFactory = require('../dominio/Space/SpaceFactory');
+const ReservationService = require('./ReservationService');
 
 /**
  * SpaceService.js
@@ -18,6 +19,7 @@ class SpaceService {
     this.spaceRepository = new BD_SpaceRepository();
     this.buildingService = new BuildingService({ initializeConsumer: false });
     this.userService = new UserService({ initializeConsumer: false });
+    this.reservationService = new ReservationService({ initializeConsumer: false });
 
     this.messageBroker = messageBroker; // Guarda la instancia
     
@@ -389,6 +391,30 @@ class SpaceService {
         changes: spaceData.updateFields
       });
     
+
+      const reservations = await this.reservationService.handlegetAllReservation();
+      const affectedReservations = reservations.filter(r => r.spaceIds.includes(updatedSpace.id));
+      for (const reservation of affectedReservations) {
+        const { id: reservationId, userId, spaceIds, startTime, duration, maxAttendees } = reservation;
+
+        try {
+          await this.reservationService.validateUserCanReserveSpace(userId, updatedSpace.id, startTime, duration);
+          let totalCapacityAllowed = 0;
+          for (const spaceId of spaceIds) {
+            const space = await this.spaceService.handleGetSpaceById({ id: spaceId});
+            const capacityAllowed = space.capacity * (space.maxUsagePercentage / 100);
+            totalCapacityAllowed += capacityAllowed;
+          }
+          if (maxAttendees > totalCapacityAllowed) {
+            throw new Error(`El número de asistentes (${maxAttendees}) excede la capacidad total permitida (${totalCapacityAllowed}) de los espacios seleccionados.`);
+          }
+        } catch (err) {
+          console.warn(`[SpaceService] Reserva ${reservationId} inválida tras actualizar espacio ${updatedSpace.id}: ${err.message}`);
+          
+          await this.reservationService.handleInvalidReservation({ id: reservationId });
+        }
+      }
+
       return updatedSpace;
     } catch (error) {
       console.error('[ERROR] Error al actualizar espacio:', error);
