@@ -301,7 +301,8 @@ class ReservationService {
     
       const updatedReservation = {
         ...reservationObj,
-        status: 'valid'  
+        status: 'valid',
+        invalidatedat: null
       };
       
       const updated = await this.reservationRepository.update(updatedReservation);
