@@ -265,7 +265,7 @@ class ReservationService {
               from: '"Reservas Unizar" <noreply@reservasunizar.com>',
               to: user.email,
               subject: "Reserva eliminada",
-              text: `Tu reserva con ID ${id} ha sido cancelada correctamente.`,
+              text: `Tu reserva con ID ${Reservationdata.id} de la fecha ${reservation.startTime} ha sido cancelada correctamente.`,
         });
     }
 
