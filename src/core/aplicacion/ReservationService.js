@@ -272,44 +272,20 @@ class ReservationService {
   // =====================================================
   async handleValidateReservation(Reservationdata) {
     try {
-      if (!Reservationdata?.id) {
-        throw new Error('El campo "id" es requerido');
-      }
-  
+      if (!Reservationdata?.id) throw new Error('El campo "id" es requerido');
+
       const existingReservation = await this.reservationRepository.findById(Reservationdata.id);
       if (!existingReservation) {
         throw new Error('Reserva no encontrada');
       }
-  
+
       const reservationObj = existingReservation.toObject ? existingReservation.toObject() : existingReservation;
-  
-      for (const spaceId of Reservationdata.spaceIds) {
-        await this.validateUserCanReserveSpace(
-          Reservationdata.userId,
-          spaceId,
-          Reservationdata.startTime,
-          Reservationdata.duration
-        );
-      }
-
-      // Verificación de ocupación máxima
-      let totalCapacityAllowed = 0;
-      for (const spaceId of Reservationdata.spaceIds) {
-        const space = await this.spaceService.handleGetSpaceById({ id: spaceId});
-        const capacityAllowed = space.capacity * (space.maxUsagePercentage / 100);
-        totalCapacityAllowed += capacityAllowed;
-      }
-
-      if (Reservationdata.maxAttendees > totalCapacityAllowed) {
-        throw new Error(`El número de asistentes (${Reservationdata.maxAttendees}) excede la capacidad total permitida (${totalCapacityAllowed}) de los espacios seleccionados.`);
-      }
-
+    
       const updatedReservation = {
         ...reservationObj,
-        ...Reservationdata,
         status: 'valid'  
       };
-
+      
       const updated = await this.reservationRepository.update(updatedReservation);
       return updated;
     } catch (error) {
