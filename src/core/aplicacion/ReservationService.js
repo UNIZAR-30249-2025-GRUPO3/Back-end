@@ -328,12 +328,13 @@ class ReservationService {
   
     const updatedReservation = {
       ...reservationObj,
-      status: 'potentially_invalid'  
+      status: 'potentially_invalid',
+      invalidatedat: new Date()
     };
     
     const updated = await this.reservationRepository.update(updatedReservation);
     return updated;
-}
+  }
 
   // ===============================================
   // CASO DE USO: Obtener reservas de un usuario
