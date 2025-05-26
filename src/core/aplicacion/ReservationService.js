@@ -6,6 +6,8 @@ const UserService = require('./UserService');
 const SpaceService = require('./SpaceService');
 const ReservationFactory = require('../dominio/Reservation/ReservationFactory');
 const moment = require('moment');
+const nodemailer = require('nodemailer');
+const transporter = require('../infraestructura/mailer');
 
 /**
  * ReservationService.js
@@ -258,7 +260,18 @@ class ReservationService {
     
     const reservation = await this.reservationRepository.findById(Reservationdata.id);
     if (!reservation) throw new Error('Reserva no encontrada');
-    
+    const userID = reservation.userId
+    const user = await this.userService.handleGetUserById({ id: userID });
+
+    if (user.email) {
+        await transporter.sendMail({
+              from: '"Reservas Unizar" <noreply@reservasunizar.com>',
+              to: user.email,
+              subject: "Reserva eliminada",
+              text: `Tu reserva con ID ${id} ha sido cancelada correctamente.`,
+        });
+    }
+
     const updated = await this.reservationRepository.delete(reservation.id);
     
     return {
@@ -266,6 +279,7 @@ class ReservationService {
       deletedAt: new Date().toISOString()
     };
   }
+
 
   // =====================================================
   // CASO DE USO: Validar o actualizar una reserva inválida
