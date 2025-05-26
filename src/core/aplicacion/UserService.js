@@ -228,7 +228,6 @@ class UserService {
     }
 
     updatedData.role = rolesToUse;
-
     console.log('Roles:', rolesToUse);
     
     // Validación del dominio mediante factoría
