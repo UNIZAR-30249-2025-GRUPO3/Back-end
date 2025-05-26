@@ -7,7 +7,7 @@
     }
 
     start() {
-        schedule('/5 * * * *', async () => {
+        schedule('*/5 * * * *', async () => {
         console.log('[CRON] Ejecutando limpieza de reservas expiradas...');
         try {
             const oneWeekAgo = new Date();
