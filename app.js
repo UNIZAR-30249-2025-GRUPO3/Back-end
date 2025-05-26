@@ -13,6 +13,7 @@ const UserService = require('./src/core/aplicacion/UserService');
 const BuildingService = require('./src/core/aplicacion/BuildingService');
 const SpaceService = require('./src/core/aplicacion/SpaceService');
 const ReservationService = require('./src/core/aplicacion/ReservationService');
+const ExpiredReservationCleaner = require('./src/core/aplicacion/ExpiredReservationCleaner');
 
 // Controladores
 const UserController = require('./src/api/controllers/userController');
@@ -37,13 +38,16 @@ const userService = new UserService();
 const buildingService = new BuildingService();
 const spaceRepository = new BD_SpaceRepository();
 const spaceService = new SpaceService();
-const resercationRepository = new BD_ReservationRepository();
+const reservationRepository = new BD_ReservationRepository();
 const reservationService = new ReservationService();
 const userController = new UserController();
 const authController = new AuthController();
 const buildingController = new BuildingController();
 const spaceController = new SpaceController();
 const reservationController = new ReservationController();
+const cleaner = new ExpiredReservationCleaner(reservationRepository);
+cleaner.start();
+
 
 reservationService.init({ userService });
 userService.init({ reservationService });

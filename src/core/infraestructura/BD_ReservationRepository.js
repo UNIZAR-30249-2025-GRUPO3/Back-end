@@ -60,8 +60,9 @@ class BD_ReservationRepository extends ReservationRepository {
                 duration = $6,
                 "endTime" = $7,
                 "additionalDetails" = $8,
-                status = $9
-            WHERE id = $10
+                status = $9,
+                invalidatedat = $10
+            WHERE id = $11
             RETURNING *;
         `, [
             reservation.userId,
@@ -73,6 +74,7 @@ class BD_ReservationRepository extends ReservationRepository {
             reservation.endTime,
             reservation.additionalDetails || null,
             reservation.status,
+            reservation.invalidatedat,
             reservation.id
         ]);
 
@@ -88,6 +90,13 @@ class BD_ReservationRepository extends ReservationRepository {
 
     async delete(id) {
         await pool.query('DELETE FROM reservations WHERE id = $1', [id]);
+    }
+
+    async deleteMany(query) {
+        await pool.query(`
+            DELETE FROM reservations 
+            WHERE status = $1 AND invalidatedat <= $2
+        `, [query.status, query.invalidated_at.$lte]);
     }
 
     async findAll(filters = {}) {

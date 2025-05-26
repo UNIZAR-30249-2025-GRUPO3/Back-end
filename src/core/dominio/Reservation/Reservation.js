@@ -9,7 +9,7 @@ const ReservationCategory = require("./ReservationCategory");
  * - Protege sus invariantes mediante validaciones internas
  */
 class Reservation {
-    constructor(id, userId, spaceIds, usageType, maxAttendees, startTime, duration, additionalDetails, status = 'valid') {
+    constructor(id, userId, spaceIds, usageType, maxAttendees, startTime, duration, additionalDetails, status = 'valid',invalidatedat = null) {
         
         // Validaciones que mantienen la integridad del agregado
         this.validateReservationInput(id, userId, spaceIds, usageType, maxAttendees, startTime, duration);
@@ -26,6 +26,7 @@ class Reservation {
         this.additionalDetails = additionalDetails;
         this.endTime = new Date(this.startTime.getTime() + this.duration * 60000);
         this.status = status;
+        this.invalidatedat = invalidatedat;
     }
 
     // ASERCIÓN: Método que valida las invariantes básicas del agregado
