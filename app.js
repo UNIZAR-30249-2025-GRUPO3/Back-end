@@ -37,9 +37,9 @@ const userRepository = new BD_UserRepository();
 const userService = new UserService();
 const buildingService = new BuildingService();
 const spaceRepository = new BD_SpaceRepository();
-const spaceService = new SpaceService();
 const reservationRepository = new BD_ReservationRepository();
 const reservationService = new ReservationService();
+const spaceService = new SpaceService();
 const userController = new UserController();
 const authController = new AuthController();
 const buildingController = new BuildingController();
@@ -49,8 +49,8 @@ const cleaner = new ExpiredReservationCleaner(reservationRepository);
 cleaner.start();
 
 
-reservationService.init({ userService });
 userService.init({ reservationService });
+reservationService.init({ userService, spaceService });
 spaceService.init({ userService, reservationService });
 
 var app = express();
