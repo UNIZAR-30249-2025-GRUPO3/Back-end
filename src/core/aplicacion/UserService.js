@@ -266,7 +266,7 @@ class UserService {
 
       for (const spaceId of spaceIds) {
         try {
-          await this.reservationService.validateUserCanReserveSpace(updatedUser.id, spaceId, startTime, duration);
+          await this.reservationService.validateUserCanReserveSpace(updatedUser.id, spaceId, startTime, duration, false);
         } catch (err) {
           console.warn(`[UserService] Reserva ${reservationId} no válida para el espacio ${spaceId}: ${err.message}`);
           await this.reservationService.handleInvalidReservation({ id: reservationId });

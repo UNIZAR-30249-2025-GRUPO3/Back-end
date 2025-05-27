@@ -402,7 +402,7 @@ class SpaceService {
       for (const reservation of affectedReservations) {
         const { id: reservationId, userId, spaceIds, startTime, duration, maxAttendees } = reservation;
         try {
-          await this.reservationService.validateUserCanReserveSpace(userId, updatedSpace.id, startTime, duration);
+          await this.reservationService.validateUserCanReserveSpace(userId, updatedSpace.id, startTime, duration, false);
           let totalCapacityAllowed = 0;
           for (const spaceId of spaceIds) {
             const space = await this.spaceRepository.findById(spaceId);
