@@ -20,7 +20,7 @@ class ReservationService {
   constructor() {
     this.reservationRepository = new BD_ReservationRepository();
     this.userService = null; 
-    this.spaceService = new SpaceService({ initializeConsumer: false });
+    this.spaceService = null;
 
     this.messageBroker = messageBroker;
 
@@ -29,8 +29,9 @@ class ReservationService {
     });
   }
 
-    init({ userService }) {
+    init({ userService, spaceService }) {
       this.userService = userService;
+      this.spaceService = spaceService;
     }
 
   // Configura el consumidor de mensajes RabbitMQ

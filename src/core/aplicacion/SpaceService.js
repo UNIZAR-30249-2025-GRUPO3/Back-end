@@ -401,7 +401,6 @@ class SpaceService {
       const affectedReservations = reservations.filter(r => r.spaceIds.includes(updatedSpace.id));
       for (const reservation of affectedReservations) {
         const { id: reservationId, userId, spaceIds, startTime, duration, maxAttendees } = reservation;
-
         try {
           await this.reservationService.validateUserCanReserveSpace(userId, updatedSpace.id, startTime, duration);
           let totalCapacityAllowed = 0;
