@@ -92,11 +92,23 @@ class BD_ReservationRepository extends ReservationRepository {
         await pool.query('DELETE FROM reservations WHERE id = $1', [id]);
     }
 
-    async deleteMany(query) {
-        await pool.query(`
-            DELETE FROM reservations 
-            WHERE status = $1 AND invalidatedat <= $2
+    async findManyToDelete(query) {
+        const result = await pool.query(`
+        SELECT r.id, r."startTime", r."userId", u.email
+        FROM reservations r
+        JOIN users u ON r."userId" = u.id
+        WHERE r.status = $1 AND r.invalidatedat <= $2
         `, [query.status, query.invalidatedat.$lte]);
+
+        return result.rows;
+    }
+
+
+    async deleteByIds(reservationIds) {
+        await pool.query(`
+            DELETE FROM reservations
+            WHERE id = ANY($1::uuid[])
+        `, [reservationIds]);
     }
 
     async findAll(filters = {}) {
