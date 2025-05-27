@@ -92,7 +92,7 @@ class ReservationService {
 
 
   // Función para validar las reglas de la reserva
-  async validateUserCanReserveSpace(userId, spaceId, startTime, duration) {
+  async validateUserCanReserveSpace(userId, spaceId, startTime, duration, isCreation) {
       
     // Obtener información del usuario
     const user = await this.userService.handleGetUserById({ id: userId });
@@ -172,11 +172,14 @@ class ReservationService {
       throw new Error(`La reserva debe estar entre ${schedule.open} y ${schedule.close} del ${dayInSpanish}`);
     }
 
-    // Verificar disponibilidad del espacio
-    const overlappingReservations = await this.reservationRepository.findOverlappingReservations(spaceId, startTime, duration);
-    if (overlappingReservations.length > 0) {
-        throw new Error('El espacio ya está reservado en el periodo de tiempo solicitado');
+    if(isCreation){
+      // Verificar disponibilidad del espacio
+      const overlappingReservations = await this.reservationRepository.findOverlappingReservations(spaceId, startTime, duration);
+      if (overlappingReservations.length > 0) {
+          throw new Error('El espacio ya está reservado en el periodo de tiempo solicitado');
+      }
     }
+
 
     // Si todas las validaciones pasan, podemos continuar
     return true;
@@ -194,7 +197,8 @@ class ReservationService {
             Reservationdata.userId,
             spaceId,
             Reservationdata.startTime,
-            Reservationdata.duration
+            Reservationdata.duration,
+            true
           );
         }
 
