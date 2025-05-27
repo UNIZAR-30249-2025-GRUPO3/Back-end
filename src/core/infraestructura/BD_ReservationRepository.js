@@ -107,7 +107,7 @@ class BD_ReservationRepository extends ReservationRepository {
     async deleteByIds(reservationIds) {
         await pool.query(`
             DELETE FROM reservations
-            WHERE id = ANY($1::uuid[])
+            WHERE id = ANY($1::int[])
         `, [reservationIds]);
     }
 
