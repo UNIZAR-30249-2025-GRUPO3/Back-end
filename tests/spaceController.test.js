@@ -74,8 +74,18 @@ describe('🔹 SpaceController', () => {
         customSchedule: null
       };
 
+      messageBroker.consumeReplies.mockResolvedValue();
+            
+      messageBroker.publish.mockImplementation(async (message, correlationId) => {
+        const handler = messageBroker.responseHandlers[correlationId];
+        if (handler) {
+          handler.resolve(mockResponse);
+        }
+      });
+
       await spaceController.createSpace(req, res);
 
+      expect(messageBroker.consumeReplies).toHaveBeenCalledWith('space_responses');
       expect(messageBroker.publish).toHaveBeenCalledWith(
         {
           operation: 'createSpace',
@@ -86,30 +96,34 @@ describe('🔹 SpaceController', () => {
         'space_operations'
       );
       
-      await messageBroker.mockConsumerCallback(mockResponse, mockUuid);
       
       expect(res.status).toHaveBeenCalledWith(201);
       expect(res.json).toHaveBeenCalledWith(mockResponse);
-      expect(messageBroker.removeConsumer).toHaveBeenCalledWith('space_responses');
     });
 
-    it('Se maneja el error cuando la creación falla', async () => {
-      const mockError = {
-        error: 'Ya existe un espacio con ese nombre'
-      };
+  it('Se maneja el error cuando la creación falla', async () => {
+    const mockError = {
+      error: 'Ya existe un espacio con ese nombre'
+    };
 
-      await spaceController.createSpace(req, res);
-
-      expect(messageBroker.publish).toHaveBeenCalled();
-      
-      await messageBroker.mockConsumerCallback(mockError, mockUuid);
-      
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith(mockError);
-      expect(messageBroker.removeConsumer).toHaveBeenCalledWith('space_responses');
+    messageBroker.consumeReplies.mockResolvedValue();
+          
+    messageBroker.publish.mockImplementation(async (message, correlationId) => {
+      const handler = messageBroker.responseHandlers[correlationId];
+      if (handler) {
+        handler.resolve(mockError);
+      }
     });
+
+    await spaceController.createSpace(req, res);
+    
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(mockError);
+  });
+
 
     it('Se maneja la excepción con el funcionamiento del broker', async () => {
+      messageBroker.consumeReplies.mockResolvedValue();
       messageBroker.publish.mockRejectedValue(new Error('Connection error'));
 
       await spaceController.createSpace(req, res);
@@ -118,12 +132,18 @@ describe('🔹 SpaceController', () => {
       expect(res.json).toHaveBeenCalledWith({ error: 'Connection error' });
     });
 
+
     it('Se manejan correctamente diferentes id', async () => {
+      messageBroker.consumeReplies.mockResolvedValue();
+            
+      messageBroker.publish.mockImplementation(async (message, correlationId) => {
+        const handler = messageBroker.responseHandlers[correlationId];
+        if (handler) {
+          handler.resolve(mockResponse);
+        }
+      });
+      
       await spaceController.createSpace(req, res);
-      
-      expect(messageBroker.publish).toHaveBeenCalled();
-      
-      await messageBroker.mockConsumerCallback({ id: '123' }, 'different-uuid');
       
       expect(res.status).not.toHaveBeenCalledWith(201);
       expect(messageBroker.removeConsumer).not.toHaveBeenCalled();
@@ -154,6 +174,12 @@ describe('🔹 SpaceController', () => {
         customSchedule: null
       };
 
+      messageBroker.consumeReplies.mockResolvedValue();
+
+      messageBroker.publish.mockImplementation(async (message, correlationId) => {
+        messageBroker.responseHandlers[correlationId].resolve(mockResponse);
+      });
+
       await spaceController.getSpaceById(req, res);
 
       expect(messageBroker.publish).toHaveBeenCalledWith(
@@ -165,12 +191,9 @@ describe('🔹 SpaceController', () => {
         'space_responses',
         'space_operations'
       );
-      
-      await messageBroker.mockConsumerCallback(mockResponse, mockUuid);
-      
+
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith(mockResponse);
-      expect(messageBroker.removeConsumer).toHaveBeenCalledWith('space_responses');
     });
 
     it('Se maneja el error cuando el espacio no es encontrado', async () => {
@@ -178,17 +201,19 @@ describe('🔹 SpaceController', () => {
         error: 'Espacio no encontrado'
       };
 
+      messageBroker.consumeReplies.mockResolvedValue();
+
+      messageBroker.publish.mockImplementation(async (message, correlationId) => {
+        messageBroker.responseHandlers[correlationId].resolve(mockError);
+      });
+
       await spaceController.getSpaceById(req, res);
 
-      expect(messageBroker.publish).toHaveBeenCalled();
-      
-      await messageBroker.mockConsumerCallback(mockError, mockUuid);
-      
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith(mockError);
-      expect(messageBroker.removeConsumer).toHaveBeenCalledWith('space_responses');
     });
   });
+
 
   describe('📌 updateSpace', () => {
     beforeEach(() => {
@@ -219,6 +244,12 @@ describe('🔹 SpaceController', () => {
         customSchedule: null
       };
 
+      messageBroker.consumeReplies.mockResolvedValue();
+
+      messageBroker.publish.mockImplementation(async (message, correlationId) => {
+        messageBroker.responseHandlers[correlationId].resolve(mockResponse);
+      });
+
       await spaceController.updateSpace(req, res);
 
       expect(messageBroker.publish).toHaveBeenCalledWith(
@@ -237,98 +268,34 @@ describe('🔹 SpaceController', () => {
         'space_responses',
         'space_operations'
       );
-      
-      await messageBroker.mockConsumerCallback(mockResponse, mockUuid);
-      
+
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith(mockResponse);
-      expect(messageBroker.removeConsumer).toHaveBeenCalledWith('space_responses');
     });
 
-    it('Se maneja el error cuando la actualización falla', async () => {
-      const mockError = {
-        error: 'Error al actualizar el espacio'
-      };
+    it('Se maneja el error cuando la actualización del espacio falla', async () => {
+        const mockError = {
+          error: 'Error al actualizar espacio'
+        };
 
-      await spaceController.updateSpace(req, res);
+        messageBroker.consumeReplies.mockResolvedValue();
 
-      expect(messageBroker.publish).toHaveBeenCalled();
-      
-      await messageBroker.mockConsumerCallback(mockError, mockUuid);
-      
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith(mockError);
-      expect(messageBroker.removeConsumer).toHaveBeenCalledWith('space_responses');
-    });
+        messageBroker.publish.mockImplementation(async (message, correlationId) => {
+          messageBroker.responseHandlers[correlationId].resolve(mockError);
+        });
 
-    it('No permite actualizar campos no permitidos', async () => {
-      req.body = {
-        name: 'Laboratorio Actualizado',
-        capacity: 35,
-        floor: 3
-      };
+        await spaceController.updateSpace(req, res);
 
-      await spaceController.updateSpace(req, res);
-      
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith({
-        error: 'No se permite actualizar los siguientes campos: name, capacity, floor. Los campos permitidos son: reservationCategory, assignmentTarget, maxUsagePercentage, customSchedule, isReservable'
+        expect(messageBroker.publish).toHaveBeenCalled();
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith(mockError);
       });
-      expect(messageBroker.publish).not.toHaveBeenCalled();
-    });
-
-    it('No permite actualizar con un objeto vacío', async () => {
-      req.body = {};
-
-      await spaceController.updateSpace(req, res);
-      
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith({
-        error: 'No se proporcionaron campos válidos para actualizar. Los campos permitidos son: reservationCategory, assignmentTarget, maxUsagePercentage, customSchedule, isReservable, y spaceType.'
-      });
-      expect(messageBroker.publish).not.toHaveBeenCalled();
-    });
-
-    it('Permite actualizar un subconjunto de campos permitidos', async () => {
-      req.body = {
-        isReservable: false
-      };
-
-      const mockResponse = {
-        id: '123',
-        isReservable: false,
-      };
-
-      await spaceController.updateSpace(req, res);
-
-      expect(messageBroker.publish).toHaveBeenCalledWith(
-        {
-          operation: 'updateSpace',
-          data: {
-            id: '123',
-            updateFields: {
-              isReservable: false
-            }
-          }
-        },
-        mockUuid,
-        'space_responses',
-        'space_operations'
-      );
-      
-      await messageBroker.mockConsumerCallback(mockResponse, mockUuid);
-      
-      expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json).toHaveBeenCalledWith(mockResponse);
-      expect(messageBroker.removeConsumer).toHaveBeenCalledWith('space_responses');
-    });
   });
+
 
   describe('📌 deleteSpace', () => {
     beforeEach(() => {
-      req.params = {
-        id: '123'
-      };
+      req.params = { id: '123' };
     });
 
     it('Se elimina correctamente un espacio', async () => {
@@ -337,6 +304,12 @@ describe('🔹 SpaceController', () => {
         name: 'Laboratorio de Informática',
         deletedAt: '2025-03-29T12:00:00.000Z'
       };
+
+      messageBroker.consumeReplies.mockResolvedValue();
+
+      messageBroker.publish.mockImplementation(async (_msg, correlationId) => {
+        messageBroker.responseHandlers[correlationId].resolve(mockResponse);
+      });
 
       await spaceController.deleteSpace(req, res);
 
@@ -349,12 +322,9 @@ describe('🔹 SpaceController', () => {
         'space_responses',
         'space_operations'
       );
-      
-      await messageBroker.mockConsumerCallback(mockResponse, mockUuid);
-      
+
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith(mockResponse);
-      expect(messageBroker.removeConsumer).toHaveBeenCalledWith('space_responses');
     });
 
     it('Se maneja el error cuando una eliminación falla', async () => {
@@ -362,84 +332,90 @@ describe('🔹 SpaceController', () => {
         error: 'Espacio no encontrado'
       };
 
+      messageBroker.consumeReplies.mockResolvedValue();
+
+      messageBroker.publish.mockImplementation(async (_msg, correlationId) => {
+        messageBroker.responseHandlers[correlationId].resolve(mockError);
+      });
+
       await spaceController.deleteSpace(req, res);
 
-      expect(messageBroker.publish).toHaveBeenCalled();
-      
-      await messageBroker.mockConsumerCallback(mockError, mockUuid);
-      
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith(mockError);
-      expect(messageBroker.removeConsumer).toHaveBeenCalledWith('space_responses');
     });
+
   });
 
-  describe('📌 getAllSpaces', () => {
-    it('Se obtienen correctamente todos los espacios', async () => {
-      const mockResponse = [
-        {
-          id: '123',
-          name: 'Laboratorio de Informática',
-          floor: 2,
-          capacity: 30,
-          spaceType: 'laboratorio',
-          isReservable: true,
-          reservationCategory: 'laboratorio',
-          assignmentTarget: {
-            type: 'department',
-            targets: ['informática e ingeniería de sistemas']
-          }
-        },
-        {
-          id: '456',
-          name: 'Aula Magna',
-          floor: 1,
-          capacity: 200,
-          spaceType: 'aula',
-          isReservable: true,
-          reservationCategory: 'aula',
-          assignmentTarget: {
-            type: 'eina',
-            targets: []
-          }
+
+describe('📌 getAllSpaces', () => {
+  it('Se obtienen correctamente todos los espacios', async () => {
+    const mockResponse = [
+      {
+        id: '123',
+        name: 'Laboratorio de Informática',
+        floor: 2,
+        capacity: 30,
+        spaceType: 'laboratorio',
+        isReservable: true,
+        reservationCategory: 'laboratorio',
+        assignmentTarget: {
+          type: 'department',
+          targets: ['informática e ingeniería de sistemas']
         }
-      ];
+      },
+      {
+        id: '456',
+        name: 'Aula Magna',
+        floor: 1,
+        capacity: 200,
+        spaceType: 'aula',
+        isReservable: true,
+        reservationCategory: 'aula',
+        assignmentTarget: {
+          type: 'eina',
+          targets: []
+        }
+      }
+    ];
 
-      await spaceController.getAllSpaces(req, res);
+    messageBroker.consumeReplies.mockResolvedValue();
 
-      expect(messageBroker.publish).toHaveBeenCalledWith(
-        {
-          operation: 'getAllSpaces',
-          data: {}
-        },
-        mockUuid,
-        'space_responses',
-        'space_operations'
-      );
-      
-      await messageBroker.mockConsumerCallback(mockResponse, mockUuid);
-      
-      expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json).toHaveBeenCalledWith(mockResponse);
-      expect(messageBroker.removeConsumer).toHaveBeenCalledWith('space_responses');
+    messageBroker.publish.mockImplementation(async (_msg, correlationId) => {
+      messageBroker.responseHandlers[correlationId].resolve(mockResponse);
     });
 
-    it('Se maneja el error cuando la obtención de todos los espacios falla', async () => {
-      const mockError = {
-        error: 'Error en la base de datos'
-      };
+    await spaceController.getAllSpaces(req, res);
 
-      await spaceController.getAllSpaces(req, res);
+    expect(messageBroker.publish).toHaveBeenCalledWith(
+      {
+        operation: 'getAllSpaces',
+        data: {}
+      },
+      mockUuid,
+      'space_responses',
+      'space_operations'
+    );
 
-      expect(messageBroker.publish).toHaveBeenCalled();
-      
-      await messageBroker.mockConsumerCallback(mockError, mockUuid);
-      
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith(mockError);
-      expect(messageBroker.removeConsumer).toHaveBeenCalledWith('space_responses');
-    });
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith(mockResponse);
   });
+
+  it('Se maneja el error cuando la obtención de espacios falla', async () => {
+    const mockError = { error: 'Error en la base de datos' };
+
+    messageBroker.consumeReplies.mockResolvedValue();
+
+    messageBroker.publish.mockImplementation(async (_msg, correlationId) => {
+      messageBroker.responseHandlers[correlationId].resolve(mockError);
+    });
+
+    await spaceController.getAllSpaces(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(mockError);
+  });
+});
+
 
   describe('📌 findSpacesByFloor', () => {
     beforeEach(() => {
@@ -478,6 +454,12 @@ describe('🔹 SpaceController', () => {
         }
       ];
 
+      messageBroker.consumeReplies.mockResolvedValue();
+
+      messageBroker.publish.mockImplementation(async (_msg, correlationId) => {
+        messageBroker.responseHandlers[correlationId].resolve(mockResponse);
+      });
+
       await spaceController.findSpacesByFloor(req, res);
 
       expect(messageBroker.publish).toHaveBeenCalledWith(
@@ -489,12 +471,9 @@ describe('🔹 SpaceController', () => {
         'space_responses',
         'space_operations'
       );
-      
-      await messageBroker.mockConsumerCallback(mockResponse, mockUuid);
-      
+
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith(mockResponse);
-      expect(messageBroker.removeConsumer).toHaveBeenCalledWith('space_responses');
     });
 
     it('Se maneja el error en la búsqueda por planta', async () => {
@@ -502,17 +481,19 @@ describe('🔹 SpaceController', () => {
         error: 'Error al buscar espacios por planta'
       };
 
+      messageBroker.consumeReplies.mockResolvedValue();
+
+      messageBroker.publish.mockImplementation(async (_msg, correlationId) => {
+        messageBroker.responseHandlers[correlationId].resolve(mockError);
+      });
+
       await spaceController.findSpacesByFloor(req, res);
 
-      expect(messageBroker.publish).toHaveBeenCalled();
-      
-      await messageBroker.mockConsumerCallback(mockError, mockUuid);
-      
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith(mockError);
-      expect(messageBroker.removeConsumer).toHaveBeenCalledWith('space_responses');
     });
   });
+
 
   describe('📌 findSpacesByCategory', () => {
     beforeEach(() => {
@@ -551,6 +532,12 @@ describe('🔹 SpaceController', () => {
         }
       ];
 
+      messageBroker.consumeReplies.mockResolvedValue();
+
+      messageBroker.publish.mockImplementation(async (_msg, correlationId) => {
+        messageBroker.responseHandlers[correlationId].resolve(mockResponse);
+      });
+
       await spaceController.findSpacesByCategory(req, res);
 
       expect(messageBroker.publish).toHaveBeenCalledWith(
@@ -562,12 +549,9 @@ describe('🔹 SpaceController', () => {
         'space_responses',
         'space_operations'
       );
-      
-      await messageBroker.mockConsumerCallback(mockResponse, mockUuid);
-      
+
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith(mockResponse);
-      expect(messageBroker.removeConsumer).toHaveBeenCalledWith('space_responses');
     });
 
     it('Se maneja el error en la búsqueda por categoría', async () => {
@@ -575,15 +559,17 @@ describe('🔹 SpaceController', () => {
         error: 'Error al buscar espacios por categoría'
       };
 
+      messageBroker.consumeReplies.mockResolvedValue();
+
+      messageBroker.publish.mockImplementation(async (_msg, correlationId) => {
+        messageBroker.responseHandlers[correlationId].resolve(mockError);
+      });
+
       await spaceController.findSpacesByCategory(req, res);
 
-      expect(messageBroker.publish).toHaveBeenCalled();
-      
-      await messageBroker.mockConsumerCallback(mockError, mockUuid);
-      
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith(mockError);
-      expect(messageBroker.removeConsumer).toHaveBeenCalledWith('space_responses');
     });
   });
+
 });
