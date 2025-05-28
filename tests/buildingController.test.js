@@ -56,9 +56,18 @@ describe('🔹 BuildingController', () => {
         }
       };
 
+      messageBroker.consumeReplies.mockResolvedValue();
+      
+      messageBroker.publish.mockImplementation(async (message, correlationId) => {
+        const handler = messageBroker.responseHandlers[correlationId];
+        if (handler) {
+          handler.resolve(mockResponse);
+        }
+      });
+
       await buildingController.getBuildingInfo(req, res);
 
-      expect(messageBroker.channel.assertQueue).toHaveBeenCalledWith('building_responses', { durable: true });
+      expect(messageBroker.consumeReplies).toHaveBeenCalledWith('building_responses');
       expect(messageBroker.publish).toHaveBeenCalledWith(
         {
           operation: 'getBuildingInfo',
@@ -68,31 +77,32 @@ describe('🔹 BuildingController', () => {
         'building_responses',
         'building_operations'
       );
-      
-      await messageBroker.mockConsumerCallback(mockResponse, mockUuid);
-      
+
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith(mockResponse);
-      expect(messageBroker.removeConsumer).toHaveBeenCalledWith('building_responses');
     });
 
     it('Se maneja el error cuando la obtención de información del edificio falla', async () => {
-      const mockError = {
-        error: 'Error al obtener información del edificio'
-      };
+      const mockError = { error: 'Error al obtener información del edificio' };
+
+      messageBroker.consumeReplies.mockResolvedValue();
+      
+      messageBroker.publish.mockImplementation(async (message, correlationId) => {
+        const handler = messageBroker.responseHandlers[correlationId];
+        if (handler) {
+          handler.resolve(mockError);
+        }
+      });
 
       await buildingController.getBuildingInfo(req, res);
 
-      expect(messageBroker.publish).toHaveBeenCalled();
-      
-      await messageBroker.mockConsumerCallback(mockError, mockUuid);
-      
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith(mockError);
-      expect(messageBroker.removeConsumer).toHaveBeenCalledWith('building_responses');
     });
 
+
     it('Se maneja la excepción con el funcionamiento del broker', async () => {
+      messageBroker.consumeReplies.mockResolvedValue();
       messageBroker.publish.mockRejectedValue(new Error('Connection error'));
 
       await buildingController.getBuildingInfo(req, res);
@@ -101,23 +111,35 @@ describe('🔹 BuildingController', () => {
       expect(res.json).toHaveBeenCalledWith({ error: 'Connection error' });
     });
 
+
     it('Se manejan correctamente diferentes id de correlación', async () => {
-      await buildingController.getBuildingInfo(req, res);
-      
-      expect(messageBroker.publish).toHaveBeenCalled();
-      
-      await messageBroker.mockConsumerCallback({ id: '123' }, 'different-uuid');
-      
+      messageBroker.consumeReplies.mockResolvedValue();
+
+      messageBroker.publish.mockImplementation(async (message, correlationId) => {
+        const wrongCorrelationId = 'different-uuid';
+        if (messageBroker.responseHandlers[wrongCorrelationId]) {
+          messageBroker.responseHandlers[wrongCorrelationId].resolve({ id: '123' });
+        }
+      });
+
+      const promise = buildingController.getBuildingInfo(req, res);
+
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
       expect(res.status).not.toHaveBeenCalled();
-      expect(messageBroker.removeConsumer).not.toHaveBeenCalled();
+      expect(res.json).not.toHaveBeenCalled();
     });
   });
 
   describe('📌 getOccupancyPercentage', () => {
     it('Se obtiene correctamente el porcentaje de ocupación', async () => {
-      const mockResponse = {
-        occupancyPercentage: 100
-      };
+      const mockResponse = { occupancyPercentage: 100 };
+
+      messageBroker.consumeReplies.mockResolvedValue();
+
+      messageBroker.publish.mockImplementation(async (message, correlationId) => {
+        messageBroker.responseHandlers[correlationId].resolve(mockResponse);
+      });
 
       await buildingController.getOccupancyPercentage(req, res);
 
@@ -130,30 +152,27 @@ describe('🔹 BuildingController', () => {
         'building_responses',
         'building_operations'
       );
-      
-      await messageBroker.mockConsumerCallback(mockResponse, mockUuid);
-      
+
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith(mockResponse);
-      expect(messageBroker.removeConsumer).toHaveBeenCalledWith('building_responses');
     });
 
     it('Se maneja el error cuando la obtención del porcentaje de ocupación falla', async () => {
-      const mockError = {
-        error: 'Error al obtener porcentaje de ocupación'
-      };
+      const mockError = { error: 'Error al obtener porcentaje de ocupación' };
+
+      messageBroker.consumeReplies.mockResolvedValue();
+
+      messageBroker.publish.mockImplementation(async (message, correlationId) => {
+        messageBroker.responseHandlers[correlationId].resolve(mockError);
+      });
 
       await buildingController.getOccupancyPercentage(req, res);
 
-      expect(messageBroker.publish).toHaveBeenCalled();
-      
-      await messageBroker.mockConsumerCallback(mockError, mockUuid);
-      
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith(mockError);
-      expect(messageBroker.removeConsumer).toHaveBeenCalledWith('building_responses');
     });
   });
+
 
   describe('📌 getOpeningHours', () => {
     it('Se obtienen correctamente los horarios de apertura', async () => {
@@ -164,6 +183,12 @@ describe('🔹 BuildingController', () => {
           sunday: { open: null, close: null }
         }
       };
+
+      messageBroker.consumeReplies.mockResolvedValue();
+
+      messageBroker.publish.mockImplementation(async (message, correlationId) => {
+        messageBroker.responseHandlers[correlationId].resolve(mockResponse);
+      });
 
       await buildingController.getOpeningHours(req, res);
 
@@ -176,30 +201,27 @@ describe('🔹 BuildingController', () => {
         'building_responses',
         'building_operations'
       );
-      
-      await messageBroker.mockConsumerCallback(mockResponse, mockUuid);
-      
+
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith(mockResponse);
-      expect(messageBroker.removeConsumer).toHaveBeenCalledWith('building_responses');
     });
 
     it('Se maneja el error cuando la obtención de horarios falla', async () => {
-      const mockError = {
-        error: 'Error al obtener horarios de apertura'
-      };
+      const mockError = { error: 'Error al obtener horarios de apertura' };
+
+      messageBroker.consumeReplies.mockResolvedValue();
+
+      messageBroker.publish.mockImplementation(async (message, correlationId) => {
+        messageBroker.responseHandlers[correlationId].resolve(mockError);
+      });
 
       await buildingController.getOpeningHours(req, res);
 
-      expect(messageBroker.publish).toHaveBeenCalled();
-      
-      await messageBroker.mockConsumerCallback(mockError, mockUuid);
-      
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith(mockError);
-      expect(messageBroker.removeConsumer).toHaveBeenCalledWith('building_responses');
     });
   });
+
 
   describe('📌 updateOccupancyPercentage', () => {
     beforeEach(() => {
@@ -214,6 +236,12 @@ describe('🔹 BuildingController', () => {
         occupancyPercentage: 75
       };
 
+      messageBroker.consumeReplies.mockResolvedValue();
+
+      messageBroker.publish.mockImplementation(async (message, correlationId) => {
+        messageBroker.responseHandlers[correlationId].resolve(mockResponse);
+      });
+
       await buildingController.updateOccupancyPercentage(req, res);
 
       expect(messageBroker.publish).toHaveBeenCalledWith(
@@ -225,12 +253,9 @@ describe('🔹 BuildingController', () => {
         'building_responses',
         'building_operations'
       );
-      
-      await messageBroker.mockConsumerCallback(mockResponse, mockUuid);
-      
+
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith(mockResponse);
-      expect(messageBroker.removeConsumer).toHaveBeenCalledWith('building_responses');
     });
 
     it('Se maneja el error cuando la actualización del porcentaje falla', async () => {
@@ -238,27 +263,29 @@ describe('🔹 BuildingController', () => {
         error: 'Error al actualizar porcentaje de ocupación'
       };
 
+      messageBroker.consumeReplies.mockResolvedValue();
+
+      messageBroker.publish.mockImplementation(async (message, correlationId) => {
+        messageBroker.responseHandlers[correlationId].resolve(mockError);
+      });
+
       await buildingController.updateOccupancyPercentage(req, res);
 
-      expect(messageBroker.publish).toHaveBeenCalled();
-      
-      await messageBroker.mockConsumerCallback(mockError, mockUuid);
-      
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith(mockError);
-      expect(messageBroker.removeConsumer).toHaveBeenCalledWith('building_responses');
     });
 
     it('Retorna error 400 cuando el porcentaje no es un número', async () => {
       req.body = { percentage: 'no-es-número' };
-      
+
       await buildingController.updateOccupancyPercentage(req, res);
-      
+
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith({ error: 'Se requiere un porcentaje válido' });
       expect(messageBroker.publish).not.toHaveBeenCalled();
     });
   });
+
 
   describe('📌 updateOpeningHours', () => {
     beforeEach(() => {
@@ -281,13 +308,19 @@ describe('🔹 BuildingController', () => {
         }
       };
 
+      messageBroker.consumeReplies.mockResolvedValue();
+
+      messageBroker.publish.mockImplementation(async (message, correlationId) => {
+        messageBroker.responseHandlers[correlationId].resolve(mockResponse);
+      });
+
       await buildingController.updateOpeningHours(req, res);
 
       expect(messageBroker.publish).toHaveBeenCalledWith(
         {
           operation: 'updateOpeningHours',
-          data: { 
-            day: 'saturday', 
+          data: {
+            day: 'saturday',
             hours: {
               open: '10:00',
               close: '15:00'
@@ -298,12 +331,9 @@ describe('🔹 BuildingController', () => {
         'building_responses',
         'building_operations'
       );
-      
-      await messageBroker.mockConsumerCallback(mockResponse, mockUuid);
-      
+
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith(mockResponse);
-      expect(messageBroker.removeConsumer).toHaveBeenCalledWith('building_responses');
     });
 
     it('Se maneja el error cuando la actualización de horarios falla', async () => {
@@ -311,38 +341,42 @@ describe('🔹 BuildingController', () => {
         error: 'Error al actualizar horarios de apertura'
       };
 
+      messageBroker.consumeReplies.mockResolvedValue();
+
+      messageBroker.publish.mockImplementation(async (message, correlationId) => {
+        messageBroker.responseHandlers[correlationId].resolve(mockError);
+      });
+
       await buildingController.updateOpeningHours(req, res);
 
-      expect(messageBroker.publish).toHaveBeenCalled();
-      
-      await messageBroker.mockConsumerCallback(mockError, mockUuid);
-      
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith(mockError);
-      expect(messageBroker.removeConsumer).toHaveBeenCalledWith('building_responses');
     });
 
     it('Retorna error 400 cuando faltan datos para actualizar horarios', async () => {
       req.body = { day: 'saturday' };
-      
+
       await buildingController.updateOpeningHours(req, res);
-      
+
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith({ error: 'Se requieren datos válidos para actualizar horarios' });
       expect(messageBroker.publish).not.toHaveBeenCalled();
     });
 
     it('Retorna error 400 cuando faltan datos para actualizar horarios (2)', async () => {
-      req.body = { hours: {
-        open: '10:00',
-        close: '15:00'
-      }};
-      
+      req.body = {
+        hours: {
+          open: '10:00',
+          close: '15:00'
+        }
+      };
+
       await buildingController.updateOpeningHours(req, res);
-      
+
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith({ error: 'Se requieren datos válidos para actualizar horarios' });
       expect(messageBroker.publish).not.toHaveBeenCalled();
     });
   });
+
 });
