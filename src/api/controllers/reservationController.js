@@ -44,6 +44,12 @@ class ReservationController {
     try {
       const correlationId = uuidv4();
 
+      await messageBroker.consumeReplies(this.replyToQueue);
+
+      const responsePromise = new Promise((resolve, reject) => {
+        messageBroker.responseHandlers[correlationId] = { resolve, reject };
+      });
+
       await messageBroker.publish(
         { operation, data },
         correlationId,
@@ -51,24 +57,19 @@ class ReservationController {
         this.requestQueue
       );
 
-      const consumer = async (response, respCorrelationId) => {
-        if (respCorrelationId === correlationId) {
-          if (response.error) {
-            res.status(400).json({ error: response.error });
-          } else {
-            const status = operation === 'createReservation' ? 201 : 200;
-            res.status(status).json(response);
-          }
-          await messageBroker.removeConsumer(this.replyToQueue);
-        }
-      };
+      const response = await responsePromise;
 
-      messageBroker.consume(this.replyToQueue, consumer);
+      if (response.error) {
+        res.status(400).json({ error: response.error });
+      } else {
+        const status = operation === 'createReservation' ? 201 : 200;
+        res.status(status).json(response);
+      }
 
     } catch (error) {
       res.status(400).json({ error: error.message });
     }
   }
-}
 
+}
 module.exports = ReservationController;
