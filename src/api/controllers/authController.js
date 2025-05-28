@@ -18,47 +18,49 @@ class AuthController {
       const replyToQueue = 'user_responses';
       const requestQueue = 'user_operations';
 
-      await messageBroker.publish({
-        operation: 'login',
-        data: { email, password }
-      }, correlationId, replyToQueue,requestQueue);
+      const responsePromise = new Promise((resolve, reject) => {
+        messageBroker.addResponseHandler(correlationId, resolve);
 
-      const consumer = async (response, respCorrelationId) => {
-        if (respCorrelationId === correlationId) {
-          try {
-            if (response.error) {
-              res.status(400).json({ error: response.error });
-            } else {
-              const token = jwt.sign(
-                { 
-                  user_id: response.id, 
-                  role: response.role.roles 
-                }, 
-                JWT_SECRET, 
-                { expiresIn: JWT_EXPIRY }
-              );
-  
-              res.status(200).json({
-                message: "OK",
-                token,
-                user: { 
-                  user_id: response.id, 
-                  role: response.role.roles 
-                }
-              });
-            }
-          } finally {
-            // Always remove the consumer regardless of success or error
-            await messageBroker.removeConsumer(replyToQueue);
-          }
+        setTimeout(() => {
+          messageBroker.removeResponseHandler(correlationId);
+          reject(new Error("Timeout esperando respuesta del login"));
+        }, 8000);
+      });
+
+     await messageBroker.consumeReplies(replyToQueue);
+      await messageBroker.publish(
+        { operation: 'login', data: { email, password } },
+        correlationId,
+        replyToQueue,
+        requestQueue
+      );
+
+      const response = await responsePromise;
+
+      if (response.error) {
+        return res.status(400).json({ error: response.error });
+      }
+
+      const token = jwt.sign(
+        {
+          user_id: response.id,
+          role: response.role.roles
+        },
+        JWT_SECRET,
+        { expiresIn: JWT_EXPIRY }
+      );
+
+      return res.status(200).json({
+        message: "OK",
+        token,
+        user: {
+          user_id: response.id,
+          role: response.role.roles
         }
-      };
-
-      messageBroker.consume(replyToQueue, consumer);
-
+      });
     } catch (err) {
-      console.error(err);
-      res.status(500).send("Server Error");
+      console.error('[AuthController] Error en login:', err);
+      return res.status(500).send("Server Error");
     }
   }
 }

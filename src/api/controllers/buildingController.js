@@ -5,7 +5,7 @@ class BuildingController {
   constructor() {
     messageBroker.connect().catch(console.error);
     this.requestQueue = 'building_operations';
-    this.responseQueue = 'building_responses';
+    this.replyToQueue = 'building_responses';
   }
 
   async getBuildingInfo(req, res) {
@@ -37,30 +37,31 @@ class BuildingController {
   }
 
   async sendMessage(operation, data, res) {
-    const correlationId = uuidv4();
-
     try {
-      await messageBroker.channel.assertQueue(this.responseQueue, { durable: true });
+      const correlationId = uuidv4();
+
+      await messageBroker.consumeReplies(this.replyToQueue);
+
+      const responsePromise = new Promise((resolve, reject) => {
+        messageBroker.responseHandlers[correlationId] = { resolve, reject };
+      });
 
       await messageBroker.publish(
         { operation, data },
         correlationId,
-        this.responseQueue,
+        this.replyToQueue,
         this.requestQueue
       );
 
-      const consumer = async (response, respCorrelationId) => {
-        if (respCorrelationId === correlationId) {
-          if (response.error) {
-            res.status(400).json({ error: response.error });
-          } else {
-            res.status(200).json(response);
-          }
-          await messageBroker.removeConsumer(this.responseQueue);
-        }
-      };
+      const response = await responsePromise;
 
-      messageBroker.consume(this.responseQueue, consumer);
+      if (response.error) {
+        res.status(400).json({ error: response.error });
+      } else {
+        const status = operation === 'buildingInfo' ? 201 : 200;
+        res.status(status).json(response);
+      }
+
     } catch (error) {
       res.status(400).json({ error: error.message });
     }

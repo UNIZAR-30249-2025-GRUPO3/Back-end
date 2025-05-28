@@ -15,6 +15,7 @@ class MessageBroker {
     this.responseQueueD = 'reservation_responses'; // Cola para respuestas para espacios
     this.amqpUrl = 'amqps://xvrhrdqc:WoZh4rUov7sSoTNqbRssm1YbgRpc647a@kebnekaise.lmq.cloudamqp.com/xvrhrdqc';
     this.consumerTags = {};
+    this.responseHandlers = {};
   }
 
   async connect() {
@@ -91,6 +92,36 @@ class MessageBroker {
     }
   }
   
+  async consumeReplies(queue) {
+    if (this.consumerTags[queue]) return; 
+
+    const { consumerTag } = await this.channel.consume(queue, async (msg) => {
+      if (!msg || !msg.content) return;
+
+      const correlationId = msg.properties.correlationId;
+      const message = JSON.parse(msg.content.toString());
+
+      const handler = this.responseHandlers[correlationId];
+      if (handler) {
+        handler.resolve(message);
+        delete this.responseHandlers[correlationId]; 
+      }
+
+      this.channel.ack(msg);
+    });
+
+    this.consumerTags[queue] = consumerTag;
+  }
+
+  addResponseHandler(correlationId, resolve) {
+    this.responseHandlers[correlationId] = { resolve };
+  }
+
+  removeResponseHandler(correlationId) {
+    delete this.responseHandlers[correlationId];
+  }
+
+
 
 }
 
